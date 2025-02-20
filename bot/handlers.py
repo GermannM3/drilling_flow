@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ConversationHandler, CallbackContext
 import logging
+from aiogram import types
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,5 @@ def create_order(update: Update, context: CallbackContext):
     except IndexError:
         update.message.reply_text("Использование: /order <услуга> <адрес>")
 
-def echo(update: Update, context: CallbackContext):
-    """Эхо-ответ при получении нераспознанных сообщений"""
-    update.message.reply_text("Я вас не понимаю. Используйте /help для получения списка команд.") 
+async def echo_handler(message: types.Message):
+    await message.reply("Я не понимаю данную команду. Используйте /help для получения списка команд.") 

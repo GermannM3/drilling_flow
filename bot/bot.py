@@ -1,29 +1,45 @@
+import asyncio
 import logging
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from bot import handlers
+import os
+
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
+from aiogram.types import Message
 
 # Настройка логирования
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+logging.basicConfig(level=logging.INFO)
 
-def main():
-    # Вставьте свой токен Telegram-бота
-    TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
-    updater = Updater(token=TOKEN, use_context=True)
-    dispatcher = updater.dispatcher
+# Получаем токен из переменных окружения
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+if not TOKEN:
+    logging.error("TELEGRAM_TOKEN не установлен")
+    exit(1)
 
-    # Регистрируем обработчики команд
-    dispatcher.add_handler(CommandHandler("start", handlers.start))
-    dispatcher.add_handler(CommandHandler("help", handlers.help_command))
-    dispatcher.add_handler(CommandHandler("profile", handlers.profile))
-    dispatcher.add_handler(CommandHandler("support", handlers.support))
-    dispatcher.add_handler(CommandHandler("order", handlers.create_order))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handlers.echo))
+# Инициализируем бота и диспетчер
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
 
-    updater.start_polling()
-    updater.idle()
+# Обработчик команды /start
+@dp.message(Command("start"))
+async def start_cmd(message: Message):
+    await message.reply("Добро пожаловать в DrillFlow!")
+
+# Обработчик команды /help
+@dp.message(Command("help"))
+async def help_cmd(message: Message):
+    await message.reply("Доступные команды: /start, /help, /order, /support и т.д.")
+
+# Пример эхо-обработчика для незнакомых команд или сообщений
+@dp.message()
+async def echo_handler(message: Message):
+    await message.reply("Я не понимаю данную команду. Используйте /help для получения списка команд.")
+
+async def main():
+    logging.info("Запуск бота...")
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
 
 if __name__ == '__main__':
-    main() 
+    asyncio.run(main()) 
