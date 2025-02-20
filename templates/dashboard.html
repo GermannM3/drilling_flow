@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Дашборд DrillFlow</title>
+    <script src="{% static 'dashboard.js' %}"></script>
+</head>
+<body>
+    <h1>Статистика заказов</h1>
+    <div id="orders-count">Всего заказов: {{ orders_count }}</div>
+    <h2>Топ-10 подрядчиков</h2>
+    <ul id="top-contractors">
+        {% for contractor in top_contractors %}
+            <li>{{ contractor.user.username }} — рейтинг: {{ contractor.rating }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html> 

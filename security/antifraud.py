@@ -2,6 +2,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Count
 from .models import User, Order, Feedback
+import requests
 
 # Константы для настройки антифрода
 IP_THRESHOLD = 1
@@ -65,3 +66,21 @@ def block_suspicious_users():
     
     except Exception as e:
         print(f"Ошибка при блокировке пользователей: {e}")
+
+def check_ip(ip_address):
+    """
+    Проверка IP-адреса через сервис ip-api.com.
+    Возвращает данные проверки или None в случае ошибки.
+    """
+    url = f"http://ip-api.com/json/{ip_address}"
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            # Дополнительные проверки можно реализовать здесь
+            if data.get('status') == 'fail':
+                return None
+            return data
+    except Exception as e:
+        print(f"Ошибка проверки IP: {e}")
+    return None
