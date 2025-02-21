@@ -1,5 +1,6 @@
 from django.contrib.gis.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User
 
 class Contractor(models.Model):
     SPECIALIZATION_CHOICES = [
