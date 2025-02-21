@@ -15,8 +15,8 @@ services:
     image: postgis/postgis
     environment:
       POSTGRES_DB: drillflow_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: atributik
+      POSTGRES_PASSWORD: 1213276
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

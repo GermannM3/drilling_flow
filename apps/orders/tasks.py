@@ -1,32 +1,30 @@
 from celery import shared_task
+from django.utils import timezone
 from .models import Order
-from apps.auth.models import ContractorProfile
-from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.measure import D
-from django.db.models import F
+from contractors.models import ContractorProfile
 
 @shared_task
 def distribute_order(order_id):
     try:
-        order = Order.objects.get(id=order_id)
+        order = Order.objects.get(id=order_id, status='pending')
     except Order.DoesNotExist:
-        return
-
-    contractors = ContractorProfile.objects.filter(
-        specialization=order.service_type,
-        current_load__lt=F('max_load'),
-        geolocation__distance_lte=(order.geolocation, D(km=F('work_radius')))
-    ).annotate(
-        distance=Distance('geolocation', order.geolocation)
-    ).order_by('-rating', 'distance')
-
-    for contractor in contractors:
-        # Здесь разместите логику подтверждения заказа (например, через Telegram)
-        confirmed = True  # Заглушка подтверждения
-        if confirmed:
-            order.contractor = contractor
-            order.status = 'assigned'
-            order.save()
-            contractor.current_load += 1
-            contractor.save()
-            break 
+        return "Order not found or not pending"
+    
+    # Фильтруем подрядчиков, прошедших верификацию и у которых количество заказов за день меньше 2
+    eligible_contractors = ContractorProfile.objects.filter(
+        verified=True,
+        daily_orders_count__lt=2,
+        # Можно добавить дополнительную фильтрацию по специализации и расстоянию
+    ).order_by('-rating')
+    
+    if eligible_contractors.exists():
+        contractor = eligible_contractors.first()
+        order.assigned_contractor = contractor
+        order.status = 'confirmed'
+        order.confirmed_at = timezone.now()
+        order.save()
+        contractor.daily_orders_count += 1
+        contractor.save()
+        return f"Заказ {order.id} назначен подрядчику {contractor.full_name}"
+    else:
+        return "Не найдено подходящего подрядчика" 

@@ -1,6 +1,15 @@
 # Используем официальный образ Python
 FROM python:3.10-slim
 
+# Устанавливаем системные зависимости для GeoDjango (GDAL, GEOS и т.д.)
+RUN apt-get update && apt-get install -y \
+    binutils \
+    libproj-dev \
+    gdal-bin \
+    libgdal-dev \
+    libgeos-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Отключаем создание байткода и буферизацию вывода
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1

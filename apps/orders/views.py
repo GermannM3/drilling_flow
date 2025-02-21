@@ -3,6 +3,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Order
 from .serializers import OrderSerializer
+from django.shortcuts import redirect, render
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
+from .forms import OrderForm
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -18,4 +22,22 @@ class OrderViewSet(viewsets.ModelViewSet):
     def my_orders(self, request):
         orders = self.queryset.filter(client=request.user)
         serializer = self.get_serializer(orders, many=True)
-        return Response(serializer.data) 
+        return Response(serializer.data)
+
+class OrderCreateView(CreateView):
+    model = Order
+    form_class = OrderForm
+    template_name = 'orders/create_order.html'
+    success_url = reverse_lazy('orders:order_success')
+
+    def form_valid(self, form):
+        order = form.save(commit=False)
+        order.client = self.request.user
+        order.save()
+        # Запуск задачи распределения заказа через Celery
+        from .tasks import distribute_order
+        distribute_order.delay(order.id)
+        return super().form_valid(form)
+
+def order_success(request):
+    return render(request, 'orders/order_success.html') 
