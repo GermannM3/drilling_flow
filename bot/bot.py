@@ -5,6 +5,8 @@ import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import Message
+from telegram.ext import Application, CommandHandler
+from django.conf import settings
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -34,6 +36,14 @@ async def help_cmd(message: Message):
 async def echo_handler(message: Message):
     await message.reply("Я не понимаю данную команду. Используйте /help для получения списка команд.")
 
+async def start(update, context):
+    await update.message.reply_text('Привет! Бот DrillFlow запущен.')
+
+def run_bot():
+    application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.run_polling()
+
 async def main():
     logging.info("Запуск бота...")
     try:
@@ -42,4 +52,4 @@ async def main():
         await bot.session.close()
 
 if __name__ == '__main__':
-    asyncio.run(main()) 
+    run_bot() 
