@@ -2,17 +2,26 @@
 Django settings for drillflow project.
 """
 
-import os
+import sys
 from pathlib import Path
+import os
 from dotenv import load_dotenv
 
-load_dotenv()  # Загрузка переменных окружения из .env
+# Загружаем переменные окружения
+load_dotenv()
 
+# Базовые настройки
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-here')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = ['germannm3-drilling-flow-842b.twc1.net', 'localhost', '127.0.0.1']
+
+# Добавим настройки безопасности
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # Приложения Django и сторонние библиотеки
 INSTALLED_APPS = [
@@ -90,6 +99,7 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
+# Настройки статических файлов
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
@@ -120,4 +130,20 @@ REST_FRAMEWORK = {
 }
 
 # Настройки для whitenoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage' 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Настройки для логирования
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+} 

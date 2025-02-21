@@ -3,7 +3,7 @@ version: '3.8'
 services:
   web:
     build: .
-    command: gunicorn --bind 0.0.0.0:8001 drillflow.wsgi:application --workers 3
+    command: gunicorn -c gunicorn.conf.py drillflow.wsgi:application
     volumes:
       - .:/app
       - static_volume:/app/static
@@ -11,18 +11,10 @@ services:
     ports:
       - "8001:8001"
     environment:
+      - DJANGO_SETTINGS_MODULE=drillflow.settings
       - SECRET_KEY=ElderCade
       - DEBUG=False
-      - ALLOWED_HOSTS=localhost,127.0.0.1,your-domain.com
-      - DB_NAME=drillflow_db
-      - DB_USER=atributik
-      - DB_PASSWORD=1213276
-      - DB_HOST=db
-      - DB_PORT=5432
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - TELEGRAM_TOKEN=7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs
-      - DJANGO_SETTINGS_MODULE=drillflow.settings
+      - ALLOWED_HOSTS=germannm3-drilling-flow-842b.twc1.net,localhost,127.0.0.1
     depends_on:
       - db
       - redis
