@@ -1,27 +1,83 @@
-version: "3.9"
+version: '3.8'
+
 services:
   web:
     build: .
-    command: gunicorn drillflow.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn --bind 0.0.0.0:8001 drillflow.wsgi:application --workers 3
     volumes:
       - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
     ports:
-      - "8000:8000"
+      - "8001:8001"
+    environment:
+      - SECRET_KEY=ElderCade
+      - DEBUG=False
+      - ALLOWED_HOSTS=localhost,127.0.0.1,your-domain.com
+      - DB_NAME=drillflow_db
+      - DB_USER=atributik
+      - DB_PASSWORD=1213276
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - TELEGRAM_TOKEN=7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs
+      - DJANGO_SETTINGS_MODULE=drillflow.settings
     depends_on:
       - db
       - redis
 
+  nginx:
+    image: nginx:1.25
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/static
+      - media_volume:/app/media
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
   db:
-    image: postgis/postgis
-    environment:
-      POSTGRES_DB: drillflow_db
-      POSTGRES_USER: atributik
-      POSTGRES_PASSWORD: 1213276
+    image: postgis/postgis:14-3.3
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=drillflow_db
+      - POSTGRES_USER=atributik
+      - POSTGRES_PASSWORD=1213276
+    ports:
+      - "5432:5432"
 
   redis:
-    image: redis:alpine
+    image: redis:7
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+
+  celery:
+    build: .
+    command: celery -A drillflow worker -l INFO
+    volumes:
+      - .:/app
+    environment:
+      - SECRET_KEY=ElderCade
+      - DEBUG=True
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DB_NAME=drillflow_db
+      - DB_USER=atributik
+      - DB_PASSWORD=1213276
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - TELEGRAM_TOKEN=7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs
+      - DJANGO_SETTINGS_MODULE=drillflow.settings
+    depends_on:
+      - redis
+      - db
 
 volumes:
-  postgres_data: 
+  postgres_data:
+  static_volume:
+  media_volume: 

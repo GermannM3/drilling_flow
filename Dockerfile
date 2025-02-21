@@ -1,12 +1,15 @@
 # Используем официальный образ Python
-FROM python:3.10-slim
+FROM python:3.11-slim
 
-# Устанавливаем системные зависимости для GeoDjango (GDAL, GEOS и т.д.)
+# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
-    binutils \
-    libproj-dev \
+    gcc \
+    postgresql-client \
     gdal-bin \
     libgdal-dev \
+    python3-gdal \
+    binutils \
+    libproj-dev \
     libgeos-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -14,19 +17,27 @@ RUN apt-get update && apt-get install -y \
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+# Устанавливаем переменные окружения для GDAL
+ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
+ENV C_INCLUDE_PATH=/usr/include/gdal
+ENV GDAL_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgdal.so
+
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
 # Устанавливаем зависимости проекта
-COPY requirements.txt /app/
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем исходный код в контейнер
-COPY . /app
+COPY . .
 
-# Открываем порт 8000 для доступа к приложению
-EXPOSE 8000
+# Создаем пользователя для запуска приложения
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
 
-# Запускаем приложение, используя Gunicorn
-CMD ["gunicorn", "drillflow.wsgi:application", "--bind", "0.0.0.0:8000"] 
+# Открываем порт 8001
+EXPOSE 8001
+
+# Запускаем через gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8001", "drillflow.wsgi:application"] 
