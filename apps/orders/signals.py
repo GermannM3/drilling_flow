@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Order
-from contractors.models import ContractorProfile
+from apps.contractors.models import ContractorProfile
 from apps.notifications.utils import send_telegram_notification, send_sms
 
 @receiver(post_save, sender=Order)
