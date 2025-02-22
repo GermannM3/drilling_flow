@@ -1,12 +1,10 @@
 # Базовый образ
 FROM python:3.11-slim
-MAINTAINER German "germannm3@gmail.com"
+LABEL maintainer="German <germannm@vk.com>"
 
 # Системные зависимости
 RUN apt-get update && apt-get install -y \
     postgresql-client \
-    curl \
-    supervisor \
     && rm -rf /var/lib/apt/lists/*
 
 # Рабочая директория
@@ -19,13 +17,6 @@ RUN pip install -r requirements.txt
 # Копирование кода
 COPY . .
 
-# Создаем необходимые директории и файлы
-RUN mkdir -p core routers services && \
-    touch core/__init__.py routers/__init__.py services/__init__.py
-
-# Конфигурация supervisor
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
 # Переменные окружения
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -35,5 +26,5 @@ ENV PYTHONUNBUFFERED=1 \
 # Порт для Nginx
 EXPOSE 8001
 
-# Запуск через supervisor
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"] 
+# Запуск
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"] 
