@@ -74,8 +74,8 @@ DrillFlow — автоматизированная платформа для р�
 ### Через Docker
 ```bash
 # Клонирование репозитория
-git clone https://github.com/yourusername/drillflow.git
-cd drillflow
+git clone https://github.com/GermannM3/drilling_flow.git
+cd drilling_flow
 
 # Запуск через Docker Compose
 docker-compose up -d
@@ -107,3 +107,45 @@ python manage.py runserver
 
 ## Лицензия
 MIT License 
+
+# DrillFlow API
+
+FastAPI приложение для управления буровыми работами.
+
+## Развертывание
+
+### Требования
+- Docker
+- PostgreSQL
+- Redis
+
+### Переменные окружения
+Создайте файл `.env` со следующими переменными:
+
+```env
+# База данных
+POSTGRES_DB=drillflow
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_password
+DATABASE_URL=postgresql://postgres:your_password@db:5432/drillflow
+
+# Redis
+REDIS_URL=redis://redis:6379/0
+
+# Безопасность
+SECRET_KEY=your_secret_key
+ALGORITHM=HS256
+
+# API ключи
+GOOGLE_MAPS_API_KEY=your_google_maps_key
+TELEGRAM_BOT_TOKEN=your_bot_token
+```
+
+### Запуск
+```bash
+# Сборка
+docker build -t drilling-flow -f Dockerfile.prod .
+
+# Запуск
+docker run -d -p 8001:8001 --env-file .env drilling-flow
+``` 

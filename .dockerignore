@@ -1,14 +1,34 @@
+# Git
 .git
 .gitignore
-.env
-*.pyc
+
+# Python
 __pycache__
-.pytest_cache
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv
+.env
+
+# IDE
+.idea
+.vscode
+
+# Тесты
+tests/
+.pytest_cache/
+
+# Документация
+docs/
+*.md
+
+# Прочее
+*.log
+.DS_Store
+
 .coverage
 htmlcov
 dist
 build
-*.egg-info
-.DS_Store
-.idea
-.vscode 
+*.egg-info 

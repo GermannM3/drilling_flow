@@ -21,10 +21,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копирование кода
 COPY --chown=appuser:appuser . .
 
-# Создаем необходимые директории
-RUN mkdir -p core routers services && \
-    touch core/__init__.py routers/__init__.py services/__init__.py
-
 # Переключение на непривилегированного пользователя
 USER appuser
 
@@ -32,8 +28,5 @@ USER appuser
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Порт
-EXPOSE 8001
-
-# Запуск
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "4"] 
+# Запуск бота
+CMD ["python", "-m", "bot.bot"] 
