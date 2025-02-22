@@ -15,16 +15,14 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # Копирование кода
-COPY . .
+COPY main.py .
 
 # Переменные окружения
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    HOST=0.0.0.0 \
-    PORT=8001
+    PYTHONDONTWRITEBYTECODE=1
 
 # Порт для Nginx
 EXPOSE 8001
 
 # Запуск
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"] 
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"] 
