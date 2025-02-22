@@ -34,4 +34,12 @@ app.include_router(webapp.router, tags=["webapp"])
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("Starting up DrillFlow API") 
+    logger.info("Starting up DrillFlow API")
+
+@app.get("/")
+async def root():
+    return {"message": "DrillFlow API is running"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"} 

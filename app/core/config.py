@@ -1,39 +1,29 @@
 from pydantic_settings import BaseSettings
-from typing import List, Optional
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "DrillFlow API"
-    VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api/v1"
+    # Базовые настройки
+    POSTGRES_SERVER: str = "db"
+    POSTGRES_USER: str = "atributik"
+    POSTGRES_PASSWORD: str = "1213276"
+    POSTGRES_DB: str = "drillflow_db"
     
-    POSTGRES_SERVER: str
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
+    # API ключи
+    TELEGRAM_TOKEN: str = "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs"
+    YANDEX_API_KEY: str = "fa6c1c44-4070-4d63-819b-bd6fbb5bae9e"
     
-    REDIS_URL: str
-    
-    JWT_SECRET_KEY: str
+    # Безопасность
+    JWT_SECRET_KEY: str = "ElderCade"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
-    TELEGRAM_TOKEN: str
-    GOOGLE_MAPS_API_KEY: str
+    # Сервер
+    HOST: str = "0.0.0.0"
+    PORT: int = 8001
     
-    ORIGINS: List[str] = ["*"]
-    
-    SECRET_KEY: str
-    ENVIRONMENT: str = "prod"
-    ALLOWED_HOSTS: List[str]
-    CORS_ORIGINS: List[str]
-    
-    RATE_LIMIT_PER_MINUTE: int = 60
-    
-    SSL_KEYFILE: Optional[str] = None
-    SSL_CERTFILE: Optional[str] = None
-    
-    class Config:
-        env_file = ".env"
+    # Опциональные настройки
+    GOOGLE_MAPS_API_KEY: str = ""
+    SECRET_KEY: str = "default-secret-key"
+    ALLOWED_HOSTS: list = ["*"]
+    CORS_ORIGINS: list = ["*"]
 
 settings = Settings() 
