@@ -36,7 +36,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.gis',
 
     'rest_framework',
 
@@ -47,6 +46,7 @@ INSTALLED_APPS = [
     'apps.orders',
     'apps.payments',
     'apps.dashboard',
+    'apps.notifications',
 ]
 
 MIDDLEWARE = [
@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'drillflow.wsgi.application'
 # Используем PostGIS для работы с геоданными
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'ENGINE': 'django.db.backends.postgresql',  # Обычный PostgreSQL
         'NAME': os.environ.get('DB_NAME'),
         'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
@@ -167,4 +167,13 @@ LOGGING = {
         'handlers': ['console'],
         'level': 'INFO',
     },
-} 
+}
+
+# Настройки GDAL
+# GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'  # Путь к библиотеке GDAL
+# GEOS_LIBRARY_PATH = '/usr/lib/libgeos_c.so'  # Путь к библиотеке GEOS
+
+# Настройки авторизации
+LOGIN_URL = '/api/auth/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/api/auth/login/' 

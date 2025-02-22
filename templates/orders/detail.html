@@ -1,0 +1,22 @@
+{% block extra_js %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+<script>
+function initMap() {
+    const location = { 
+        lat: {{ order.latitude }}, 
+        lng: {{ order.longitude }} 
+    };
+    
+    const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 15,
+        center: location,
+    });
+
+    new google.maps.Marker({
+        position: location,
+        map: map,
+        title: "{{ order.address }}"
+    });
+}
+</script>
+{% endblock %} 

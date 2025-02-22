@@ -24,6 +24,21 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(orders, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get'])
+    def nearby_contractors(self, request, pk=None):
+        order = self.get_object()
+        radius = float(request.query_params.get('radius', 10))
+        
+        contractors = order.nearby_contractors(radius=radius)
+        data = [{
+            'id': c[0].id,
+            'name': c[0].name,
+            'distance': round(c[1], 2),
+            'rating': c[0].rating
+        } for c in contractors]
+        
+        return Response(data)
+
 class OrderCreateView(CreateView):
     model = Order
     form_class = OrderForm

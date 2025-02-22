@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from apps.contractors.models import Contractor
 from apps.clients.models import Client
 from django.conf import settings
-from django.db.models import Avg
+from django.db.models import Avg, Count
 from apps.notifications.models import Notification
 
 def dashboard_view(request):
@@ -27,17 +27,17 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         # Статистика
         context['orders_count'] = Order.objects.count()
-        context['contractors_count'] = Contractor.objects.filter(is_active=True).count()
+        context['contractors_count'] = ContractorProfile.objects.filter(is_active=True).count()
         context['clients_count'] = Client.objects.count()
         context['completed_orders_count'] = Order.objects.filter(status='completed').count()
         context['pending_orders_count'] = Order.objects.filter(status='pending').count()
-        context['avg_rating'] = Contractor.objects.aggregate(Avg('rating'))['rating__avg'] or 0
+        context['avg_rating'] = ContractorProfile.objects.aggregate(Avg('rating'))['rating__avg'] or 0
         
         # Последние заказы
         context['recent_orders'] = Order.objects.select_related('client').order_by('-created_at')[:5]
         
         # Лучшие подрядчики
-        context['top_contractors'] = Contractor.objects.order_by('-rating')[:5]
+        context['top_contractors'] = ContractorProfile.objects.order_by('-rating')[:5]
         
         # Уведомления
         context['notifications'] = Notification.objects.filter(
@@ -48,13 +48,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         # Данные для карты
         orders_for_map = Order.objects.filter(latitude__isnull=False, longitude__isnull=False)
-        orders_json = [{
+        context['orders_json'] = [{
             'id': order.id,
             'latitude': float(order.latitude),
             'longitude': float(order.longitude),
+            'title': str(order),
             'status': order.get_status_display()
         } for order in orders_for_map]
-        context['orders_json'] = json.dumps(orders_json)
         
         # API ключ для Google Maps
         context['google_maps_api_key'] = settings.GOOGLE_MAPS_API_KEY
