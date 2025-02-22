@@ -1,0 +1,36 @@
+# Базовый образ
+FROM python:3.11-slim
+
+# Системные зависимости
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Создание пользователя
+RUN useradd -m -u 1000 appuser && \
+    mkdir -p /app && \
+    chown -R appuser:appuser /app
+
+# Рабочая директория
+WORKDIR /app
+
+# Копирование и установка зависимостей
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копирование кода
+COPY --chown=appuser:appuser . .
+
+# Переключение на непривилегированного пользователя
+USER appuser
+
+# Настройки безопасности
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app
+
+# Порт
+EXPOSE 8001
+
+# Запуск
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "4"] 

@@ -1,3 +1,3 @@
-web: gunicorn drillflow.wsgi:application --bind 0.0.0.0:$PORT
+web: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4
 worker: celery -A drillflow worker -l INFO
-bot: python manage.py runbot 
+bot: python manage.py runbot
