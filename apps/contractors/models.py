@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from apps.geo.models import Location
 
 SPECIALIZATION_CHOICES = (
     ('drilling', 'Бурение'),
@@ -31,4 +32,8 @@ class ContractorReview(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Review for {self.contractor.user.username}: {self.rating}" 
+        return f"Review for {self.contractor.user.username}: {self.rating}"
+
+class ContractorLocation(Location):
+    contractor = models.OneToOneField('ContractorProfile', on_delete=models.CASCADE)
+    service_radius = models.DecimalField(max_digits=5, decimal_places=2) 

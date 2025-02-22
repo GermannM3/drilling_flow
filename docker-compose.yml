@@ -2,23 +2,18 @@ version: '3.8'
 
 services:
   web:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    command: gunicorn -c gunicorn.conf.py drillflow.wsgi:application
-    volumes:
-      - static_volume:/app/static
-      - media_volume:/app/media
+    build: .
     ports:
       - "8001:8001"
-    environment:
-      - DJANGO_SETTINGS_MODULE=drillflow.settings
-      - SECRET_KEY=ElderCade
-      - DEBUG=False
-      - ALLOWED_HOSTS=germannm3-drilling-flow-842b.twc1.net,localhost,127.0.0.1,94.241.142.86
+    env_file:
+      - .env
     depends_on:
       - db
       - redis
+    volumes:
+      - ./app:/app/app
+      - static_volume:/app/static
+      - media_volume:/app/media
 
   nginx:
     image: nginx:1.25
@@ -36,17 +31,16 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=drillflow_db
-      - POSTGRES_USER=atributik
-      - POSTGRES_PASSWORD=1213276
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "5432:5432"
 
   redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
 
   celery:
     build: .
@@ -72,5 +66,6 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
   static_volume:
   media_volume: 
