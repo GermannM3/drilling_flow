@@ -12,6 +12,6 @@ tenacity>=8.2.3
 django-redis>=5.4.0
 python-dotenv>=1.0.0
 gunicorn>=21.2.0
-GDAL>=3.6.0
+GDAL==3.6.2
 django-postgis>=0.2
 whitenoise>=6.6.0 

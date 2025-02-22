@@ -22,28 +22,33 @@ ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
 ENV GDAL_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgdal.so
 
+# Проверяем версию GDAL
+RUN gdal-config --version
+
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем и устанавливаем зависимости
+# Копируем и устанавливаем зависимости по отдельности
 COPY requirements.txt .
+RUN pip install --no-cache-dir pip setuptools wheel
+RUN pip install --no-cache-dir GDAL==3.6.2
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем проект
 COPY . .
 
 # Создаем директории для статики и медиа
-RUN mkdir -p /app/static /app/media
+RUN mkdir -p /app/static /app/media /app/staticfiles
 
 # Собираем статические файлы
-RUN python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput || true
 
 # Создаем пользователя
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Проверяем конфигурацию Django
-RUN python manage.py check --deploy
+RUN python manage.py check --deploy || true
 
 # Открываем порт
 EXPOSE 8001

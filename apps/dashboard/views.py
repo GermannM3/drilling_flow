@@ -7,6 +7,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from apps.contractors.models import Contractor
 from apps.clients.models import Client
 from django.conf import settings
+from django.db.models import Avg
+from apps.notifications.models import Notification
 
 def dashboard_view(request):
     orders_count = Order.objects.count()
@@ -25,12 +27,24 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         # Статистика
         context['orders_count'] = Order.objects.count()
-        context['contractors_count'] = Contractor.objects.count()
+        context['contractors_count'] = Contractor.objects.filter(is_active=True).count()
         context['clients_count'] = Client.objects.count()
+        context['completed_orders_count'] = Order.objects.filter(status='completed').count()
+        context['pending_orders_count'] = Order.objects.filter(status='pending').count()
+        context['avg_rating'] = Contractor.objects.aggregate(Avg('rating'))['rating__avg'] or 0
         
         # Последние заказы
-        recent_orders = Order.objects.select_related('client').order_by('-created_at')[:10]
-        context['recent_orders'] = recent_orders
+        context['recent_orders'] = Order.objects.select_related('client').order_by('-created_at')[:5]
+        
+        # Лучшие подрядчики
+        context['top_contractors'] = Contractor.objects.order_by('-rating')[:5]
+        
+        # Уведомления
+        context['notifications'] = Notification.objects.filter(
+            user=self.request.user,
+            is_read=False
+        ).order_by('-created_at')[:5]
+        context['unread_notifications_count'] = context['notifications'].count()
         
         # Данные для карты
         orders_for_map = Order.objects.filter(latitude__isnull=False, longitude__isnull=False)

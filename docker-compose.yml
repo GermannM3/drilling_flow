@@ -2,10 +2,11 @@ version: '3.8'
 
 services:
   web:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     command: gunicorn -c gunicorn.conf.py drillflow.wsgi:application
     volumes:
-      - .:/app
       - static_volume:/app/static
       - media_volume:/app/media
     ports:
@@ -14,7 +15,7 @@ services:
       - DJANGO_SETTINGS_MODULE=drillflow.settings
       - SECRET_KEY=ElderCade
       - DEBUG=False
-      - ALLOWED_HOSTS=germannm3-drilling-flow-842b.twc1.net,localhost,127.0.0.1
+      - ALLOWED_HOSTS=germannm3-drilling-flow-842b.twc1.net,localhost,127.0.0.1,94.241.142.86
     depends_on:
       - db
       - redis
