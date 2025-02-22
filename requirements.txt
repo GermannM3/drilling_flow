@@ -41,5 +41,5 @@ aiogram>=3.4.1
 aiohttp>=3.9.3
 
 # Utilities
-googlemaps>=4.10.0
+yandex-maps>=1.0.0
 tenacity>=8.2.3 
