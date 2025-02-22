@@ -18,3 +18,11 @@
      ```
      
 ## Структура проекта 
+
+## API Endpoints
+
+Base URL: https://germannm3-drilling-flow-12c3.twc1.net
+
+### Основные эндпоинты:
+- `/health` - проверка работоспособности
+- `/docs` - Swagger документация 
