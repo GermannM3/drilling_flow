@@ -33,7 +33,10 @@ pytest-asyncio>=0.23.2
 httpx>=0.25.2
 locust>=2.20.1
 
+# Telegram
+aiogram>=3.4.1
+aiohttp>=3.9.3
+
 # Utilities
-python-telegram-bot>=20.6
 googlemaps>=4.10.0
 tenacity>=8.2.3 

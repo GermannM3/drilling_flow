@@ -5,15 +5,18 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers 4
     restart: always
     env_file:
       - .env
     volumes:
-      - ./app:/app/app
+      - ./app:/app/app:ro
+      - static_volume:/app/static
+      - media_volume:/app/media
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     deploy:
       replicas: 2
       restart_policy:
@@ -27,6 +30,28 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - api
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
   db:
     image: postgres:14
@@ -42,6 +67,8 @@ services:
       - "postgres"
       - "-c"
       - "max_connections=200"
+      - "-c"
+      - "shared_buffers=256MB"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
@@ -61,6 +88,11 @@ services:
       --save 900 1
       --save 300 10
       --save 60 10000
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   celery:
     build: .
@@ -108,4 +140,5 @@ volumes:
   grafana_data:
   backups:
   static_volume:
-  media_volume: 
+  media_volume:
+  certbot: 

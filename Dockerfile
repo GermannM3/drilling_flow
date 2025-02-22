@@ -18,8 +18,18 @@ RUN trivy filesystem --no-progress --exit-code 1 --severity HIGH,CRITICAL /app
 # Финальный образ
 FROM python:3.11-slim
 
-# Непривилегированный пользователь
-RUN useradd -m -u 1000 appuser
+# Установка системных зависимостей от root
+USER root
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Создание непривилегированного пользователя
+RUN useradd -m -u 1000 appuser && \
+    mkdir -p /app && \
+    chown -R appuser:appuser /app
+
+# Переключение на непривилегированного пользователя
 USER appuser
 
 # Настройки безопасности
@@ -33,15 +43,11 @@ WORKDIR /app
 COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 
-RUN apt-get update && apt-get install -y \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache /wheels/*
+# Установка зависимостей
+RUN pip install --no-cache-dir --user /wheels/*
 
-COPY . .
-
-RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser
+# Копирование кода приложения
+COPY --chown=appuser:appuser . .
 
 EXPOSE 8001
 

@@ -1,42 +1,49 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
+from aiogram.types import WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
 import json
 import base64
-from log import logger
+from app.core.logger import logger
+from app.core.config import settings
 
-class Bot:
-    def __init__(self, token: str, webapp_url: str):
-        self.application = Application.builder().token(token).build()
-        self.webapp_url = webapp_url
+class TelegramBot:
+    def __init__(self):
+        self.bot = Bot(token=settings.TELEGRAM_TOKEN)
+        self.dp = Dispatcher()
+        self.webapp_url = "https://t.me/Drill_Flow_bot/D_F"
         
-        # Handlers
-        self.application.add_handler(CommandHandler("start", self.start_command))
-        self.application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, self.handle_webapp_data))
+        # Регистрируем хендлеры
+        self.register_handlers()
 
-    async def start_command(self, update, context):
+    def register_handlers(self):
+        self.dp.message.register(self.start_command, Command("start"))
+        self.dp.message.register(self.handle_webapp_data, lambda m: m.web_app_data)
+
+    async def start_command(self, message: types.Message):
         """Отправляет приветственное сообщение с кнопкой для открытия веб-приложения"""
-        keyboard = [[InlineKeyboardButton(
-            "Создать заказ",
-            web_app=WebAppInfo(url=f"{self.webapp_url}/webapp")
-        )]]
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(
+                text="Создать заказ",
+                web_app=WebAppInfo(url=self.webapp_url)
+            )
+        ]])
         
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(
+        await message.answer(
             "Добро пожаловать! Нажмите кнопку ниже, чтобы создать заказ:",
-            reply_markup=reply_markup
+            reply_markup=keyboard
         )
 
-    async def handle_webapp_data(self, update, context):
+    async def handle_webapp_data(self, message: types.Message):
         """Обрабатывает данные, отправленные из веб-приложения"""
         try:
-            data = json.loads(update.message.web_app_data.data)
+            data = json.loads(message.web_app_data.data)
             
             if data['action'] == 'create_order':
                 order_data = data['data']
                 
                 # Создаем заказ
                 order = await self.create_order(
-                    client_id=update.effective_user.id,
+                    client_id=message.from_user.id,
                     service_type=order_data['service_type'],
                     address=order_data['address'],
                     latitude=float(order_data['latitude']),
@@ -56,7 +63,7 @@ class Bot:
                 )
                 
                 # Отправляем подтверждение
-                await update.message.reply_text(
+                await message.answer(
                     f"✅ Заказ создан!\n\n"
                     f"📍 {order_data['address']}\n"
                     f"🔧 {order.get_service_type_display()}\n"
@@ -70,8 +77,13 @@ class Bot:
                     
         except Exception as e:
             logger.error(f"Error processing webapp data: {e}")
-            await update.message.reply_text("❌ Произошла ошибка при создании заказа")
+            await message.answer("❌ Произошла ошибка при создании заказа")
 
-    def run(self):
+    async def start(self):
         """Запускает бота"""
-        self.application.run_polling() 
+        try:
+            logger.info("Starting bot...")
+            await self.dp.start_polling(self.bot)
+        except Exception as e:
+            logger.error(f"Error starting bot: {e}")
+            raise 
