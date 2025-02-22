@@ -1,5 +1,6 @@
 # Базовый образ
 FROM python:3.11-slim
+MAINTAINER German "germannm3@gmail.com"
 
 # Системные зависимости
 RUN apt-get update && apt-get install -y \
@@ -8,43 +9,31 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-# Создание пользователя
-RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app && \
-    chown -R appuser:appuser /app
-
 # Рабочая директория
 WORKDIR /app
 
 # Копирование и установка зависимостей
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Копирование кода
-COPY --chown=appuser:appuser . .
+COPY . .
 
-# Создаем необходимые директории
+# Создаем необходимые директории и файлы
 RUN mkdir -p core routers services && \
     touch core/__init__.py routers/__init__.py services/__init__.py
 
 # Конфигурация supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Переключение на непривилегированного пользователя
-USER appuser
-
-# Настройки безопасности
+# Переменные окружения
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     HOST=0.0.0.0 \
     PORT=8001
 
-# Порт
+# Порт для Nginx
 EXPOSE 8001
 
-# Проверка здоровья
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8001/health || exit 1
-
-# Запуск supervisor
+# Запуск через supervisor
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"] 
