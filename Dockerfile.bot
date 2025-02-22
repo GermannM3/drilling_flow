@@ -1,4 +1,4 @@
-# Базовый образ
+# Телеграм-бот
 FROM python:3.11-slim
 
 # Системные зависимости
@@ -16,10 +16,11 @@ WORKDIR /app
 
 # Копирование и установка зависимостей
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Копирование кода
-COPY --chown=appuser:appuser . .
+COPY . .
+RUN chown -R appuser:appuser /app
 
 # Переключение на непривилегированного пользователя
 USER appuser
@@ -29,4 +30,4 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 # Запуск бота
-CMD ["python", "-m", "bot.bot"] 
+CMD ["python", "app/bot/main.py"] 

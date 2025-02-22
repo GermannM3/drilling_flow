@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     
     # Сервер
     HOST: str = "0.0.0.0"
-    PORT: int = 8001
+    PORT: int = 8080
     
     # Опциональные настройки
     GOOGLE_MAPS_API_KEY: str = ""

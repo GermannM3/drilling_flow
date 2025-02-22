@@ -1,16 +1,16 @@
-#!/bin/bash
+#!/bin/sh
+# start.sh - запуск supervisord для управления FastAPI и Telegram-ботом
 
-# Остановить все контейнеры
-docker-compose down
+# Настройка системных лимитов
+ulimit -n 65535
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
 
-# Удалить все контейнеры и образы
-docker system prune -af
+# Установка переменных окружения для оптимизации
+export UVICORN_WORKERS=${WORKERS:-4}
+export PROMETHEUS_MULTIPROC_DIR=${PROMETHEUS_MULTIPROC_DIR:-/tmp}
 
-# Собрать и запустить
-docker-compose up --build -d
+# Создание директорий для логов, если их нет
+mkdir -p /app/logs
 
-# Применить миграции
-docker-compose exec api alembic upgrade head
-
-# Показать логи
-docker-compose logs -f 
+# Запуск supervisord с оптимизированной конфигурацией
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf 

@@ -1,28 +1,58 @@
-# Базовый образ
-FROM python:3.11-slim
-LABEL maintainer="German <germannm@vk.com>"
+# Build stage
+FROM python:3.11-slim as builder
 
-# Системные зависимости
+# Установка build-time зависимостей
 RUN apt-get update && apt-get install -y \
+    gcc \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Рабочая директория
+WORKDIR /build
+
+# Копируем и устанавливаем зависимости для оптимизации кэша
+COPY requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements.txt
+
+# Финальный образ
+FROM python:3.11-slim
+
+# Установка production зависимостей
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    curl \
+    supervisor \
+    nginx \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -u 1000 appuser \
+    && mkdir -p /app /app/logs /app/static /app/media /app/uploads \
+    && chown -R appuser:appuser /app
+
 WORKDIR /app
 
-# Копирование и установка зависимостей
+# Установка зависимостей
+COPY --from=builder /wheels /wheels
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt \
+    && rm -rf /wheels \
+    && rm -rf /root/.cache/pip/*
 
-# Копирование кода
+# Копирование конфигураций
+COPY docker/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY . .
+RUN chown -R appuser:appuser /app
 
-# Переменные окружения
+# Настройка окружения
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONOPTIMIZE=2 \
+    PYTHONHASHSEED=random \
+    PROMETHEUS_MULTIPROC_DIR=/tmp \
+    HOST=0.0.0.0 \
+    PORT=8080
 
-# Порт для Nginx
+# Открываем порт
 EXPOSE 8080
 
-# Запуск
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"] 
+# Запуск через supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"] 

@@ -1,43 +1,47 @@
-# Core
-fastapi
-uvicorn
-pydantic
-pydantic-settings
-python-multipart
+# Core - с фиксированными версиями
+fastapi>=0.100.0,<0.116.0
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+pydantic-settings==2.8.0
+python-multipart==0.0.20
 
-# Database
-sqlalchemy
-alembic
-psycopg2-binary
-asyncpg
+# Убираем явное указание starlette, так как она является зависимостью FastAPI
+# starlette==0.27.0 
+
+# Database - оптимизированные версии
+sqlalchemy==2.0.38
+asyncpg==0.30.0  # Асинхронный драйвер PostgreSQL
+alembic==1.14.1
+psycopg2-binary==2.9.10
+
+# Cache & Queue - с оптимизациями
+redis[hiredis]==5.2.1  # hiredis для быстрого парсинга
+celery[redis]==5.4.0
+fastapi-cache2==0.2.2
 
 # Security
-python-jose[cryptography]
-passlib[bcrypt]
-slowapi
-certifi
-
-# Cache & Queue
-redis
-celery
-fastapi-cache2
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+slowapi==0.1.9
+certifi==2025.1.31
 
 # Monitoring
-prometheus-client
-sentry-sdk
+prometheus-client==0.21.1
+sentry-sdk==2.22.0
+prometheus-fastapi-instrumentator==5.11.2
 
 # Logging
-loguru
+loguru==0.7.3
 
 # Testing
-pytest
-pytest-asyncio
-httpx
-locust
+pytest==8.3.4
+pytest-asyncio==0.25.3
+httpx==0.28.1
+locust==2.32.10
 
 # Telegram
-aiogram
-aiohttp
+aiogram==3.18.0
+aiohttp==3.11.12
 
 # Utilities
-tenacity 
+tenacity==9.0.0 

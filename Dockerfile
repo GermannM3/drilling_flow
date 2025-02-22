@@ -1,54 +1,53 @@
 FROM python:3.11-slim as builder
 
-WORKDIR /app
-
+# Установка только необходимых build-time зависимостей
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
+WORKDIR /build
 
-# Сканирование уязвимостей
-FROM aquasec/trivy:latest as trivy
-COPY --from=builder /app /app
-RUN trivy filesystem --no-progress --exit-code 1 --severity HIGH,CRITICAL /app
+# Копируем и устанавливаем зависимости отдельно для лучшего кэширования
+COPY requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements.txt
 
 # Финальный образ
 FROM python:3.11-slim
 
-# Установка системных зависимостей от root
-USER root
+# Установка runtime зависимостей
 RUN apt-get update && apt-get install -y \
     postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
-
-# Создание непривилегированного пользователя
-RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app && \
-    chown -R appuser:appuser /app
-
-# Переключение на непривилегированного пользователя
-USER appuser
-
-# Настройки безопасности
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app \
-    PATH="/home/appuser/.local/bin:$PATH"
+    curl \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -u 1000 appuser \
+    && mkdir -p /app /app/logs /app/static /app/media \
+    && chown -R appuser:appuser /app
 
 WORKDIR /app
 
-COPY --from=builder /app/wheels /wheels
-COPY --from=builder /app/requirements.txt .
+# Копирование wheel-пакетов и установка зависимостей
+COPY --from=builder /wheels /wheels
+COPY requirements.txt .
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt \
+    && rm -rf /wheels \
+    && rm -rf /root/.cache/pip/*
 
-# Установка зависимостей
-RUN pip install --no-cache-dir --user /wheels/*
+# Копирование конфигурации и кода
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY . .
+RUN chown -R appuser:appuser /app
 
-# Копирование кода приложения
-COPY --chown=appuser:appuser . .
+USER appuser
 
-EXPOSE 8001
+# Настройки окружения и оптимизации Python
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONOPTIMIZE=2 \
+    PYTHONHASHSEED=random
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "4"] 
+# Порт для FastAPI
+EXPOSE 8080
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"] 

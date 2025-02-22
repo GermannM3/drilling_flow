@@ -1,8 +1,10 @@
+version: '3.8'
+
 services:
-  api:
-    build: 
+  app:
+    build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     restart: always
     env_file:
       - .env
@@ -10,6 +12,8 @@ services:
       - ./app:/app/app:ro
       - static_volume:/app/static
       - media_volume:/app/media
+    ports:
+      - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
@@ -23,11 +27,13 @@ services:
         max_attempts: 3
         window: 120s
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - backend
 
   nginx:
     image: nginx:alpine
@@ -41,8 +47,10 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     depends_on:
-      - api
+      - app
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    networks:
+      - backend
 
   certbot:
     image: certbot/certbot
@@ -72,6 +80,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - backend
 
   redis:
     image: redis:7-alpine
@@ -89,6 +99,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - backend
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - app
+      - redis
+    networks:
+      - backend
 
   celery:
     build: .
@@ -101,18 +126,8 @@ services:
       - redis
       - db
     restart: always
-
-  bot:
-    build: .
-    command: python -m app.bot.bot
-    volumes:
-      - ./app:/app/app
-    env_file:
-      - .env
-    depends_on:
-      - api
-      - redis
-    restart: always
+    networks:
+      - backend
 
   prometheus:
     image: prom/prometheus
@@ -127,6 +142,8 @@ services:
     ports:
       - "9090:9090"
     restart: always
+    networks:
+      - backend
 
   grafana:
     image: grafana/grafana
@@ -140,13 +157,19 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
     restart: always
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
 
 volumes:
   postgres_data:
   redis_data:
   prometheus_data:
   grafana_data:
-  backups:
   static_volume:
   media_volume:
+  backups:
   certbot: 
