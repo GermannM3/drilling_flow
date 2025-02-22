@@ -38,7 +38,11 @@ async def startup_event():
 
 @app.get("/")
 async def root():
-    return {"message": "DrillFlow API is running"}
+    return {
+        "status": "ok",
+        "version": settings.VERSION,
+        "environment": settings.ENV
+    }
 
 @app.get("/health")
 async def health_check():
