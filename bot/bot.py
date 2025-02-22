@@ -36,13 +36,32 @@ async def help_cmd(message: Message):
 async def echo_handler(message: Message):
     await message.reply("Я не понимаю данную команду. Используйте /help для получения списка команд.")
 
+logger = logging.getLogger('bot')
+
 async def start(update, context):
-    await update.message.reply_text('Привет! Бот DrillFlow запущен.')
+    logger.info(f"Received /start command from user {update.effective_user.id}")
+    try:
+        await update.message.reply_text('Привет! Бот DrillFlow запущен.')
+        logger.info("Successfully sent response to /start command")
+    except Exception as e:
+        logger.error(f"Error in start command: {e}")
+
+async def error_handler(update, context):
+    logger.error(f"Update {update} caused error {context.error}")
 
 def run_bot():
-    application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.run_polling()
+    try:
+        logger.info("Starting bot initialization...")
+        logger.info(f"Using token: {settings.TELEGRAM_TOKEN[:5]}...")
+        
+        application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
+        application.add_handler(CommandHandler("start", start))
+        application.add_error_handler(error_handler)
+        
+        logger.info("Bot initialized successfully, starting polling...")
+        application.run_polling()
+    except Exception as e:
+        logger.error(f"Failed to start bot: {e}")
 
 async def main():
     logging.info("Запуск бота...")

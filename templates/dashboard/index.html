@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Панель управления DrillFlow</h1>
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <h3>Заказы</h3>
+                <p class="stat-number">{{ orders_count }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Подрядчики</h3>
+                <p class="stat-number">{{ contractors_count }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Клиенты</h3>
+                <p class="stat-number">{{ clients_count }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-main">
+        <div class="orders-list">
+            <h2>Последние заказы</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Клиент</th>
+                        <th>Статус</th>
+                        <th>Дата</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td>{{ order.id }}</td>
+                        <td>{{ order.client.name }}</td>
+                        <td>{{ order.get_status_display }}</td>
+                        <td>{{ order.created_at|date:"d.m.Y" }}</td>
+                        <td>
+                            <a href="{% url 'orders:detail' order.id %}" class="btn btn-primary">Подробнее</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="map-container">
+            <h2>Карта заказов</h2>
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+<script>
+    function initMap() {
+        const map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 10,
+            center: { lat: 55.7558, lng: 37.6173 }, // Москва
+        });
+
+        const orders = {{ orders_json|safe }};
+        orders.forEach(order => {
+            new google.maps.Marker({
+                position: { lat: order.latitude, lng: order.longitude },
+                map: map,
+                title: `Заказ #${order.id}`
+            });
+        });
+    }
+    window.onload = initMap;
+</script>
+{% endblock %} 
