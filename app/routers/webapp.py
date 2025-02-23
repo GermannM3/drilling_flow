@@ -13,10 +13,11 @@ router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-static_path = Path(__file__).parent.parent.parent / "static" / "webapp"
-static_path.mkdir(parents=True, exist_ok=True)  # Создаем директорию если не существует
+# Путь к статическим файлам относительно корня проекта
+static_path = Path.cwd() / "static" / "webapp"
+static_path.mkdir(parents=True, exist_ok=True)
 
-# Затем монтируйте статику
+# Монтируем статические файлы
 router.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 def check_telegram_auth(auth_data):
@@ -43,15 +44,14 @@ async def get_webapp():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>DrillFlow Dashboard</title>
         <script src="https://telegram.org/js/telegram-web-app.js"></script>
-        <script src="https://cdn.tailwindcss.com"></script>
         <style>
             {open(static_path / 'style.css').read() if (static_path / 'style.css').exists() else ''}
         </style>
     </head>
     <body>
         <div id="webcrumbs">
-            <div class="min-h-screen bg-gradient-to-br from-emerald-800 to-blue-900 flex items-center justify-center p-4">
-                <div class="w-full max-w-[1200px] bg-slate-900 rounded-xl shadow-2xl p-4 border-2 border-emerald-500">
+            <div class="min-h-screen bg-gradient-to-br from-emerald-800 to-blue-900 flex items-center justify-center p-4 sm:p-8">
+                <div class="w-full max-w-[1200px] bg-slate-900 rounded-xl shadow-2xl p-4 sm:p-8 border-2 sm:border-4 border-emerald-500">
                     <header class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
                         <div class="flex items-center gap-4">
                             <span class="material-symbols-outlined text-3xl text-emerald-400">water_drop</span>
