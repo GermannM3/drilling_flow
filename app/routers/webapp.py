@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import logging
+from ..core.bot import bot
 
 router = APIRouter(tags=["webapp"])
 
@@ -127,33 +128,20 @@ async def telegram_webhook(request: Request):
         update = await request.json()
         logger.info(f"Received update: {update}")
         
-        # Обработка сообщений
+        # Используем бота для отправки сообщений
         if "message" in update:
             message = update["message"]
             chat_id = message.get("chat", {}).get("id")
-            text = message.get("text", "")
             
-            # Здесь добавьте логику обработки команд
-            if text == "/start":
-                return JSONResponse({
-                    "method": "sendMessage",
-                    "chat_id": chat_id,
-                    "text": "Добро пожаловать в DrillFlow! Выберите действие:",
-                    "reply_markup": {
-                        "keyboard": [
-                            [{"text": "📊 Статистика"}, {"text": "📝 Новый заказ"}],
-                            [{"text": "👥 Подрядчики"}, {"text": "⭐️ Рейтинг"}]
-                        ],
-                        "resize_keyboard": True
-                    }
-                })
-            
-            # Обработка других команд
-            return JSONResponse({
-                "method": "sendMessage",
-                "chat_id": chat_id,
-                "text": f"Получена команда: {text}"
-            })
+            if message.get("text") == "/start":
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text="Добро пожаловать в DrillFlow! Выберите действие или откройте веб-приложение:",
+                    reply_markup=webapp_keyboard
+                )
+                return JSONResponse({"ok": True})
+                
+        return JSONResponse({"ok": True})
             
     except Exception as e:
         logger.error(f"Error processing webhook: {e}")
