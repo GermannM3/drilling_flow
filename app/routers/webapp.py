@@ -3,14 +3,14 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from ..core.config import get_settings, Settings
+import os
 
 router = APIRouter(tags=["webapp"])
 
-# Путь к статическим файлам
-static_path = Path(__file__).parent.parent / "static" / "webapp"
-
-# Монтируем статические файлы
-router.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+# Закомментируйте эти строки
+# static_path = Path(__file__).parent.parent / "static" / "webapp"
+# os.makedirs(str(static_path), exist_ok=True)
+# router.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 @router.get("/")
 async def get_webapp(settings: Settings = Depends(get_settings)):
