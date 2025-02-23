@@ -17,4 +17,4 @@ class Contractor(Base):
     location = Column(String, nullable=True)
 
     # Определяем отношения без обратных ссылок
-    orders = relationship("Order", backref="contractor") 
+    contractor_orders = relationship("Order", back_populates="contractor", foreign_keys="Order.contractor_id") 

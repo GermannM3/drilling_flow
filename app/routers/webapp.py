@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 import logging
 from ..core.bot import bot, dp
 import hashlib
 import hmac
 from ..core.config import get_settings
-from openpyxl import load_workbook
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
+from ..services.geo import YandexGeoService
+from ..db.models import Order, ServiceType, User
+from ..services.auth import get_current_user
 
 router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
@@ -45,76 +47,98 @@ async def get_webapp():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>DrillFlow Dashboard</title>
         <script src="https://telegram.org/js/telegram-web-app.js"></script>
-        <style>
-            {open(STATIC_DIR / 'style.css').read() if (STATIC_DIR / 'style.css').exists() else ''}
-        </style>
-    </head>
-    <body>
-        <div id="webcrumbs">
-            <div class="min-h-screen bg-gradient-to-br from-emerald-800 to-blue-900 flex items-center justify-center p-4 sm:p-8">
-                <div class="w-full max-w-[1200px] bg-slate-900 rounded-xl shadow-2xl p-4 sm:p-8 border-2 sm:border-4 border-emerald-500">
-                    <header class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-                        <div class="flex items-center gap-4">
-                            <span class="material-symbols-outlined text-3xl text-emerald-400">water_drop</span>
-                            <h1 class="text-2xl font-bold text-emerald-400">Панель Управления DrillFlow</h1>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <button onclick="handleCreateOrder()" 
-                                    class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-all transform hover:scale-105 border-2 border-emerald-400">
-                                Создать заказ
-                            </button>
-                        </div>
-                    </header>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="bg-slate-800 rounded-xl border-2 border-emerald-500 p-4">
-                            <h2 class="text-lg font-bold mb-4 text-emerald-400">Активные заказы</h2>
-                            <div class="space-y-4" id="activeOrders">
-                                <!-- Заказы будут добавляться динамически -->
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-800 rounded-xl border-2 border-emerald-500 p-4">
-                            <h2 class="text-lg font-bold mb-4 text-emerald-400">Лучшие подрядчики</h2>
-                            <div class="space-y-4" id="topContractors">
-                                <!-- Подрядчики будут добавляться динамически -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        <link rel="stylesheet" href="/static/webapp/style.css">
         <script>
-            const tg = window.Telegram.WebApp;
+            // Инициализация Telegram WebApp
+            let tg = window.Telegram.WebApp;
+            tg.expand();
             
-            async function handleCreateOrder() {{
+            // Функция для отправки заказа
+            async function submitOrder(form) {{
+                let formData = new FormData(form);
+                let data = {{}};
+                formData.forEach((value, key) => data[key] = value);
+                
                 try {{
-                    const response = await fetch('/api/orders/create', {{
+                    let response = await fetch('/api/orders/create', {{
                         method: 'POST',
-                        headers: {{ 'Content-Type': 'application/json' }},
-                        body: JSON.stringify({{ /* данные */ }})
+                        headers: {{
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${{tg.initData}}`
+                        }},
+                        body: JSON.stringify(data)
                     }});
                     
-                    if (response.ok) {{
+                    let result = await response.json();
+                    if (result.status === 'success') {{
                         tg.showPopup({{
                             title: 'Успех',
                             message: 'Заказ успешно создан!',
-                            buttons: [{{ type: 'ok' }}]
+                            buttons: [{{type: 'ok'}}]
                         }});
-                        loadActiveOrders();
                     }}
                 }} catch (error) {{
-                    console.error('Ошибка:', error);
-                    tg.showAlert(error.message);
+                    tg.showAlert('Ошибка при создании заказа: ' + error.message);
+                }}
+                return false;
+            }}
+            
+            // Функция для регистрации
+            async function register() {{
+                try {{
+                    let userData = {{
+                        telegram_id: tg.initDataUnsafe.user.id,
+                        username: tg.initDataUnsafe.user.username,
+                        first_name: tg.initDataUnsafe.user.first_name
+                    }};
+                    
+                    let response = await fetch('/api/auth/register', {{
+                        method: 'POST',
+                        headers: {{
+                            'Content-Type': 'application/json'
+                        }},
+                        body: JSON.stringify(userData)
+                    }});
+                    
+                    let result = await response.json();
+                    if (result.status === 'success') {{
+                        tg.showPopup({{
+                            title: 'Успех',
+                            message: 'Регистрация успешна!',
+                            buttons: [{{type: 'ok'}}]
+                        }});
+                    }}
+                }} catch (error) {{
+                    tg.showAlert('Ошибка при регистрации: ' + error.message);
                 }}
             }}
-
-            // Инициализация WebApp
-            tg.ready();
-            tg.expand();
-            tg.enableClosingConfirmation();
         </script>
+    </head>
+    <body>
+        <div id="app">
+            <form id="orderForm" onsubmit="return submitOrder(this);">
+                <h2>Создать заказ</h2>
+                <div class="form-group">
+                    <label>Тип работ</label>
+                    <select name="service_type" required>
+                        <option value="drilling">Бурение скважины</option>
+                        <option value="repair">Ремонт оборудования</option>
+                        <option value="maintenance">Обслуживание</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Адрес</label>
+                    <input type="text" name="address" required>
+                </div>
+                <div class="form-group">
+                    <label>Описание</label>
+                    <textarea name="description" required></textarea>
+                </div>
+                <button type="submit">Отправить заказ</button>
+            </form>
+            
+            <button onclick="register()">Зарегистрироваться через Telegram</button>
+        </div>
     </body>
     </html>
     """
@@ -146,25 +170,40 @@ async def get_about():
     })
 
 @router.post("/webhook")
-async def telegram_webhook(request: Request):
+async def webhook(update: dict):
+    """Обработчик вебхуков от Telegram"""
     try:
-        update = await request.json()
-        logger.info(f"Received update: {update}")
-        await dp.process_update(update)
-        return JSONResponse({"ok": True})
+        # Обрабатываем обновление
+        await dp.feed_webhook_update(update)
+        return JSONResponse({"status": "ok"})
     except Exception as e:
-        logger.error(f"Error processing webhook: {e}")
-        return JSONResponse({"error": str(e)}, status_code=500)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/auth/register")
+async def register_user(user_data: dict):
+    """Регистрация пользователя"""
+    try:
+        # Здесь будет логика регистрации
+        return {"status": "success", "message": "Регистрация успешна"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/api/orders/create")
-async def create_order(request: Request):
+async def create_order(
+    order_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Создание заказа"""
     try:
-        data = await request.json()
-        # Обработка создания заказа
-        return JSONResponse({"success": True})
+        # Здесь будет логика создания заказа
+        return {"status": "success", "order_id": 1}
     except Exception as e:
-        logger.error(f"Error creating order: {e}")
-        return JSONResponse({"success": False, "error": str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/orders")
+async def get_orders():
+    """Получение списка заказов"""
+    return {"orders": []}
 
 @router.get("/api/orders/active")
 async def get_active_orders():

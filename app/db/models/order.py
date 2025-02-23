@@ -44,6 +44,6 @@ class Order(Base):
     completed_at = Column(DateTime, nullable=True)
 
     # Отношения
-    client = relationship("User", back_populates="orders")
-    contractor = relationship("Contractor", back_populates="orders")
+    client = relationship("User", back_populates="client_orders")
+    contractor = relationship("Contractor", back_populates="contractor_orders")
     rating = relationship("OrderRating", back_populates="order", uselist=False) 

@@ -1,22 +1,52 @@
+"""
+Инициализация Telegram бота
+"""
 from aiogram import Bot, Dispatcher, Router
-from aiogram.types import WebAppInfo, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import (
+    WebAppInfo, KeyboardButton, ReplyKeyboardMarkup, 
+    InlineKeyboardMarkup, InlineKeyboardButton,
+    Message, BotCommand
+)
 from aiogram.filters import Command
 from ..core.config import get_settings
 
 settings = get_settings()
-bot = Bot(token=settings.TELEGRAM_TOKEN)
-dp = Dispatcher()
+
+# Создаем роутер
 router = Router()
+
+# Создаем бота только если не в режиме тестирования
+if not settings.TESTING:
+    bot = Bot(token=settings.TELEGRAM_TOKEN)
+    dp = Dispatcher()
+else:
+    from unittest.mock import AsyncMock, MagicMock
+    # В тестах используем моки
+    bot = MagicMock()
+    bot.send_message = AsyncMock()
+    dp = MagicMock()
 
 # Регистрируем бота в диспетчере
 dp.bot = bot
+
+async def setup_bot_commands():
+    """Установка команд бота"""
+    commands = [
+        BotCommand(command="start", description="Запустить бота"),
+        BotCommand(command="help", description="Помощь"),
+        BotCommand(command="register", description="Регистрация"),
+        BotCommand(command="profile", description="Мой профиль"),
+        BotCommand(command="orders", description="Мои заказы"),
+        BotCommand(command="new_order", description="Создать заказ"),
+    ]
+    await bot.set_my_commands(commands)
 
 # Создаем клавиатуру с веб-приложением
 webapp_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(
             text="🌐 Открыть DrillFlow",
-            web_app=WebAppInfo(url="https://drilling-flow.vercel.app")
+            web_app=WebAppInfo(url=f"https://{settings.TELEGRAM_BOT_DOMAIN}")
         )],
         [KeyboardButton(text="📊 Статистика"), KeyboardButton(text="📝 Новый заказ")],
         [KeyboardButton(text="👥 Подрядчики"), KeyboardButton(text="⭐️ Рейтинг")]
@@ -25,11 +55,42 @@ webapp_keyboard = ReplyKeyboardMarkup(
 )
 
 @router.message(Command("start"))
-async def start_command(message):
+async def start_command(message: Message):
+    """Обработчик команды /start"""
     await message.answer(
-        "Добро пожаловать в DrillFlow!\n\n" +
-        "Используйте кнопки меню для навигации:",
+        "Добро пожаловать в DrillFlow! 🚀\n\n"
+        "Я помогу вам управлять буровыми работами.\n"
+        "Используйте кнопки ниже для навигации:",
         reply_markup=webapp_keyboard
+    )
+
+@router.message(Command("help"))
+async def help_command(message: Message):
+    """Обработчик команды /help"""
+    help_text = (
+        "🔍 Доступные команды:\n\n"
+        "/start - Запустить бота\n"
+        "/register - Регистрация\n"
+        "/profile - Мой профиль\n"
+        "/orders - Мои заказы\n"
+        "/new_order - Создать заказ\n"
+        "/help - Это сообщение\n\n"
+        "Также вы можете использовать кнопки меню для навигации."
+    )
+    await message.answer(help_text)
+
+@router.message(Command("register"))
+async def register_command(message: Message):
+    """Обработчик команды /register"""
+    register_button = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(
+            text="Зарегистрироваться",
+            web_app=WebAppInfo(url=f"https://{settings.TELEGRAM_BOT_DOMAIN}/register")
+        )
+    ]])
+    await message.answer(
+        "Для регистрации нажмите кнопку ниже:",
+        reply_markup=register_button
     )
 
 @router.message(lambda m: m.text == "📊 Статистика")
@@ -79,4 +140,12 @@ async def handle_message(message):
         await message.answer("Пожалуйста, используйте кнопки меню для навигации.")
 
 # Регистрируем роутер в диспетчере
-dp.include_router(router) 
+dp.include_router(router)
+
+# Экспортируем для использования в других модулях
+__all__ = ["bot", "dp", "router"]
+
+# Устанавливаем команды при запуске
+if not settings.TESTING:
+    import asyncio
+    asyncio.create_task(setup_bot_commands()) 

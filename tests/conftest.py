@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import os
 
 # Добавляем корневую директорию проекта в PYTHONPATH
 root_dir = Path(__file__).parent.parent
@@ -15,6 +16,10 @@ from sqlalchemy_utils import database_exists, create_database, drop_database
 from app.core.application import create_app
 from app.core.config import Settings, get_settings
 from app.db.base import Base
+
+# В начале файла добавим:
+os.environ["TESTING"] = "True"
+os.environ["TELEGRAM_TOKEN"] = "test_token"
 
 def get_test_settings() -> Settings:
     """Настройки для тестов"""
@@ -47,8 +52,8 @@ def client(settings) -> Generator:
         yield c
 
 @pytest.fixture(scope="session")
-def test_db():
-    """Создает тестовую БД"""
+async def engine():
+    """Фикстура для создания тестового движка БД"""
     settings = get_test_settings()
     
     if database_exists(settings.DATABASE_URL):
@@ -56,17 +61,24 @@ def test_db():
     
     create_database(settings.DATABASE_URL)
     
-    # Создаем таблицы
-    engine = create_async_engine(settings.DATABASE_URL)
-    Base.metadata.create_all(bind=engine)
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=False,
+        future=True
+    )
     
-    yield engine
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     
-    # Удаляем БД после тестов
-    drop_database(settings.DATABASE_URL)
+    try:
+        yield engine
+    finally:
+        await engine.dispose()
+        if database_exists(settings.DATABASE_URL):
+            drop_database(settings.DATABASE_URL)
 
 @pytest.fixture
-async def db_session(engine) -> AsyncSession:
+async def db_session(engine):
     """Фикстура сессии БД"""
     async_session = sessionmaker(
         engine,

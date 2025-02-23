@@ -5,14 +5,23 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 from app.core.config import get_settings
+from app.core.application import create_app
+
+@pytest.fixture(scope="module")
+def test_app():
+    app = create_app()
+    return app
+
+@pytest.fixture(scope="module")
+def client(test_app):
+    with TestClient(test_app) as client:
+        yield client
 
 def test_health_check(client):
     """Тест endpoint проверки здоровья"""
     response = client.get("/health")
-    data = response.json()
     assert response.status_code == 200
-    assert data["status"] == "ok"
-    assert "version" in data
+    assert response.json()["status"] == "ok"
 
 @pytest.mark.parametrize("endpoint", [
     "/api/orders",

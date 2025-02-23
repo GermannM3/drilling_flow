@@ -1,7 +1,7 @@
 """
 Сервис распределения заказов
 """
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from app.db.models import Order, Contractor
 from .geo import calculate_distance
 
@@ -16,9 +16,12 @@ async def distribute_order(order: Order, contractors: List[Contractor]) -> Optio
     Returns:
         Contractor: Выбранный подрядчик или None
     """
-    suitable_contractors = []
+    suitable_contractors: List[Tuple[Contractor, float]] = []
     
     for contractor in contractors:
+        if not contractor.user:
+            continue
+            
         # Проверяем загрузку подрядчика
         if contractor.user.current_orders >= contractor.user.max_orders_per_day:
             continue
@@ -40,7 +43,7 @@ async def distribute_order(order: Order, contractors: List[Contractor]) -> Optio
     # Сортируем по рейтингу и расстоянию
     sorted_contractors = sorted(
         suitable_contractors,
-        key=lambda x: (x[0].rating, -x[1]),  # Высокий рейтинг и малое расстояние
+        key=lambda x: (x[0].user.rating, -x[1]),  # Высокий рейтинг и малое расстояние
         reverse=True
     )
     

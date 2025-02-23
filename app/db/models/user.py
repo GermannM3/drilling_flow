@@ -27,5 +27,5 @@ class User(Base):
     rating = Column(Float, default=0.0)
     
     # Отношения
-    orders = relationship("Order", back_populates="client")
+    client_orders = relationship("Order", back_populates="client", foreign_keys="Order.client_id")
     contractor_profile = relationship("Contractor", back_populates="user", uselist=False) 

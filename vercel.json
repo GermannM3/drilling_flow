@@ -20,9 +20,7 @@
     "PYTHON_VERSION": "3.11",
     "PYTHONPATH": ".",
     "APP_MODULE": "app.main:app",
-    "LOG_LEVEL": "INFO"
-  },
-  "buildCommand": "pip install -r requirements-vercel.txt",
-  "devCommand": "python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
-  "installCommand": "pip install -r requirements-vercel.txt"
+    "LOG_LEVEL": "INFO",
+    "TESTING": "false"
+  }
 } 

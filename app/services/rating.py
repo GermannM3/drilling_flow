@@ -1,7 +1,7 @@
 """
 Сервис управления рейтингами
 """
-from app.db.models import User, Order, OrderRating
+from app.db.models import User, Order, OrderRating, OrderStatus
 
 async def calculate_contractor_rating(user: User) -> float:
     """
@@ -15,7 +15,7 @@ async def calculate_contractor_rating(user: User) -> float:
     """
     completed_orders = [
         order for order in user.orders 
-        if order.status == "completed" and order.rating
+        if order.status == OrderStatus.COMPLETED and order.rating
     ]
     
     if not completed_orders:
@@ -41,5 +41,5 @@ async def update_rating_after_order(order: Order, rating_value: float, comment: 
     )
     
     # Обновляем рейтинг подрядчика
-    contractor = order.contractor
-    contractor.rating = await calculate_contractor_rating(contractor.user) 
+    if order.contractor and order.contractor.user:
+        order.contractor.user.rating = await calculate_contractor_rating(order.contractor.user) 

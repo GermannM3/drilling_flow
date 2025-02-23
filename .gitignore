@@ -209,3 +209,4 @@ Thumbs.db
 # Добавьте эти строки
 static/webapp/output.css
 app/static/webapp/output.css
+.vercel

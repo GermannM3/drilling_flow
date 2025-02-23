@@ -22,7 +22,8 @@ def mock_dp():
 @pytest.mark.asyncio
 async def test_bot_initialization(settings):
     """Тест инициализации бота"""
-    with patch('aiogram.Bot'), patch('aiogram.Dispatcher'):
+    with patch('aiogram.Bot') as mock_bot, \
+         patch('aiogram.Dispatcher') as mock_dp:
         bot = TelegramBot()
         assert bot.bot is not None
         assert bot.dp is not None
