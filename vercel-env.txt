@@ -1,0 +1,35 @@
+# Основные настройки
+ENVIRONMENT=production
+DEBUG=false
+PYTHON_VERSION=3.11
+PYTHONUNBUFFERED=1
+HOST=0.0.0.0
+PORT=8080
+WORKERS=4
+
+# Безопасность
+SECRET_KEY=@secret-key
+JWT_SECRET_KEY=@jwt-secret-key
+SSL_ENABLED=true
+RATE_LIMIT_ENABLED=true
+
+# База данных и Redis
+DATABASE_URL=postgresql+asyncpg://atributik:BpM3TIh2USFn0KBPj77qh9WerjTCqsad@dpg-cutmu00gph6c73b4gj20-a.oregon-postgres.render.com/drill_flow_db
+REDIS_URL=rediss://red-cuc38m5umphs73dssemg:d61dbhNo6YdQhZtNdSH787DSBhEnl3Te@oregon-keyvalue.render.com:6379
+
+# API Keys
+YANDEX_API_KEY=fa6c1c44-4070-4d63-819b-bd6fbb5bae9e
+
+# Supabase
+SUPABASE_URL=https://daauaksfcihrhaxqcpdv.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhYXVha3NmY2locmhheHFjcGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzMjIzMTksImV4cCI6MjA1NTg5ODMxOX0.iFq2AW16YPqAuJJ1yIiT6JJZ4MBusbO4enHFouMSvA8
+
+# Telegram бот
+TELEGRAM_TOKEN=@your-telegram-token
+BOT_WEBHOOK_URL=https://[your-vercel-domain].vercel.app/webhook
+BOT_ADMIN_GROUP_ID=-1001234567890
+BOT_SUPPORT_GROUP_ID=-1001234567891
+
+# CORS и хосты
+ALLOWED_HOSTS=[your-vercel-domain].vercel.app
+CORS_ORIGINS=https://[your-vercel-domain].vercel.app 

@@ -12,7 +12,6 @@ python-multipart==0.0.20
 sqlalchemy==2.0.38
 asyncpg==0.30.0  # Асинхронный драйвер PostgreSQL
 alembic==1.14.1
-psycopg2-binary==2.9.10
 
 # Cache & Queue - с оптимизациями
 redis[hiredis]==5.2.1  # hiredis для быстрого парсинга
