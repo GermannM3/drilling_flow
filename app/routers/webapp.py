@@ -35,14 +35,14 @@ async def get_webapp():
         <title>DrillFlow Dashboard</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-        <script async src="https://telegram.org/js/telegram-widget.js?22" 
-                data-telegram-login="Drill_Flow_bot" 
-                data-size="large" 
-                data-onauth="onTelegramAuth" 
-                data-request-access="write">
-        </script>
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
         <style>
-            /* Полный CSS код, который вы предоставили */
+            /* Импорт стилей */
+            @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+            
+            /* Базовые стили */
             #webcrumbs { font-family: Inter !important; font-size: 18px !important; }
             #webcrumbs .min-h-screen { min-height: 100vh; }
             #webcrumbs .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); }
@@ -50,133 +50,115 @@ async def get_webapp():
             #webcrumbs .to-blue-900 { --tw-gradient-to: #1e3a8a; }
             /* ... весь остальной CSS ... */
         </style>
-        <script>
-            function onTelegramAuth(user) {
-                fetch('/auth/telegram', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(user)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('auth-section').style.display = 'none';
-                        document.getElementById('dashboard').style.display = 'block';
-                    }
-                });
-            }
-        </script>
     </head>
     <body>
         <div id="webcrumbs">
-            <div class="min-h-screen bg-gradient-to-br from-emerald-800 to-blue-900 flex items-center justify-center p-4 sm:p-8">
-                <div class="w-full max-w-[1200px] bg-slate-900 rounded-xl shadow-2xl p-4 sm:p-8 border-2 sm:border-4 border-emerald-500">
+            <div class="min-h-screen bg-gradient-to-br from-emerald-800 to-blue-900 flex items-center justify-center p-4">
+                <div class="w-full max-w-[1200px] bg-slate-900 rounded-xl shadow-2xl p-4 border-2 border-emerald-500">
                     <header class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
                         <div class="flex items-center gap-4">
-                            <span class="material-symbols-outlined text-3xl sm:text-4xl text-emerald-400">water_drop</span>
-                            <h1 class="text-2xl sm:text-3xl font-bold text-emerald-400">Панель Управления DrillFlow</h1>
+                            <span class="material-symbols-outlined text-3xl text-emerald-400">water_drop</span>
+                            <h1 class="text-2xl font-bold text-emerald-400">Панель Управления DrillFlow</h1>
                         </div>
                         <div class="flex items-center gap-4">
-                            <details class="relative">
-                                <summary class="flex items-center gap-2 cursor-pointer hover:bg-emerald-800 p-2 rounded-lg transition-all">
-                                    <span class="material-symbols-outlined text-emerald-400">notifications</span>
-                                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
-                                </summary>
-                                <div class="absolute right-0 mt-2 w-64 bg-slate-800 rounded-lg shadow-2xl p-4 z-10 border-2 border-emerald-500">
-                                    <div class="flex flex-col gap-2">
-                                        <div class="p-2 hover:bg-slate-700 rounded-lg transition-all text-emerald-400">
-                                            <p class="font-semibold">Новый Заказ #1234</p>
-                                            <p class="text-sm text-emerald-300">Запрос на бурение скважины - 5км</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </details>
-                            <details class="relative">
-                                <summary class="flex items-center gap-2 cursor-pointer hover:bg-emerald-800 p-2 rounded-lg transition-all text-emerald-400">
-                                    <span class="material-symbols-outlined">account_circle</span>
-                                    <span>Администратор</span>
-                                </summary>
-                            </details>
+                            <button onclick="createOrder()" class="bg-emerald-600 text-white px-3 py-1 rounded-lg hover:bg-emerald-700 transition-all transform hover:scale-105 border-2 border-emerald-400">
+                                Создать заказ
+                            </button>
                         </div>
                     </header>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-                        <div class="bg-emerald-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500">
-                            <div class="flex items-center gap-4">
-                                <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">engineering</span>
-                                <div class="text-emerald-400">
-                                    <p class="text-xl sm:text-2xl font-bold">247</p>
-                                    <p class="text-sm sm:text-base">Активных Подрядчиков</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-blue-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500">
-                            <div class="flex items-center gap-4">
-                                <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">assignment</span>
-                                <div class="text-emerald-400">
-                                    <p class="text-xl sm:text-2xl font-bold">1,893</p>
-                                    <p class="text-sm sm:text-base">Выполненных Заказов</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-emerald-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500">
-                            <div class="flex items-center gap-4">
-                                <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">pending</span>
-                                <div class="text-emerald-400">
-                                    <p class="text-xl sm:text-2xl font-bold">42</p>
-                                    <p class="text-sm sm:text-base">Ожидающих Заказов</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-blue-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500">
-                            <div class="flex items-center gap-4">
-                                <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">stars</span>
-                                <div class="text-emerald-400">
-                                    <p class="text-xl sm:text-2xl font-bold">4.8</p>
-                                    <p class="text-sm sm:text-base">Средний Рейтинг</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                        <div class="lg:col-span-2 bg-slate-800 rounded-xl border-2 sm:border-4 border-emerald-500 p-4 sm:p-6">
-                            <h2 class="text-lg sm:text-xl font-bold mb-4 text-emerald-400">Последние Заказы</h2>
-                            <div class="space-y-4">
-                                <div class="flex items-center justify-between p-2 sm:p-4 hover:bg-slate-700 rounded-lg transition-all">
-                                    <div class="flex items-center gap-4">
-                                        <span class="material-symbols-outlined text-emerald-400">drill</span>
-                                        <div class="text-emerald-400">
-                                            <p class="font-semibold">Бурение Скважины</p>
-                                            <p class="text-xs sm:text-sm text-emerald-300">ул. Главная 123, Город</p>
-                                        </div>
-                                    </div>
-                                    <button class="bg-emerald-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-emerald-700 transition-all transform hover:scale-105 border-2 border-emerald-400 text-sm sm:text-base">
-                                        Назначить
-                                    </button>
-                                </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-slate-800 rounded-xl border-2 border-emerald-500 p-4">
+                            <h2 class="text-lg font-bold mb-4 text-emerald-400">Активные заказы</h2>
+                            <div class="space-y-4" id="activeOrders">
+                                <!-- Заказы будут добавляться динамически -->
                             </div>
                         </div>
 
-                        <div class="bg-slate-800 rounded-xl border-2 sm:border-4 border-emerald-500 p-4 sm:p-6">
-                            <h2 class="text-lg sm:text-xl font-bold mb-4 text-emerald-400">Лучшие Подрядчики</h2>
-                            <div class="space-y-4">
-                                <div class="flex items-center justify-between p-2 hover:bg-slate-700 rounded-lg transition-all">
-                                    <div class="flex items-center gap-2">
-                                        <span class="material-symbols-outlined text-emerald-400">account_circle</span>
-                                        <p class="font-semibold text-emerald-400 text-sm sm:text-base">Иван Иванов</p>
-                                    </div>
-                                    <div class="flex items-center text-emerald-400">
-                                        <span class="material-symbols-outlined text-yellow-500">star</span>
-                                        <span class="text-sm sm:text-base">4.9</span>
-                                    </div>
-                                </div>
+                        <div class="bg-slate-800 rounded-xl border-2 border-emerald-500 p-4">
+                            <h2 class="text-lg font-bold mb-4 text-emerald-400">Лучшие подрядчики</h2>
+                            <div class="space-y-4" id="topContractors">
+                                <!-- Подрядчики будут добавляться динамически -->
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <script>
+            let tg = window.Telegram.WebApp;
+            tg.expand();
+
+            // Загрузка активных заказов
+            async function loadActiveOrders() {
+                try {
+                    const response = await fetch('/api/orders/active');
+                    const orders = await response.json();
+                    const container = document.getElementById('activeOrders');
+                    
+                    orders.forEach(order => {
+                        const orderElement = document.createElement('div');
+                        orderElement.className = 'flex items-center justify-between p-2 hover:bg-slate-700 rounded-lg transition-all';
+                        orderElement.innerHTML = `
+                            <div class="flex items-center gap-4">
+                                <span class="material-symbols-outlined text-emerald-400">drill</span>
+                                <div>
+                                    <p class="font-semibold text-emerald-400">${order.title}</p>
+                                    <p class="text-xs text-emerald-300">${order.location}</p>
+                                </div>
+                            </div>
+                            <button onclick="assignOrder(${order.id})" class="bg-emerald-600 text-white px-3 py-1 rounded-lg hover:bg-emerald-700 transition-all transform hover:scale-105 border-2 border-emerald-400">
+                                Назначить
+                            </button>
+                        `;
+                        container.appendChild(orderElement);
+                    });
+                } catch (error) {
+                    console.error('Ошибка загрузки заказов:', error);
+                }
+            }
+
+            // Создание нового заказа
+            function createOrder() {
+                tg.showPopup({
+                    title: 'Создание заказа',
+                    message: 'Введите детали заказа',
+                    buttons: [
+                        {id: 'cancel', type: 'cancel', text: 'Отмена'},
+                        {id: 'create', type: 'default', text: 'Создать'}
+                    ]
+                }, function(buttonId) {
+                    if (buttonId === 'create') {
+                        // Отправка данных на сервер
+                        fetch('/api/orders/create', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                // Данные заказа
+                            })
+                        });
+                    }
+                });
+            }
+
+            // Назначение подрядчика на заказ
+            function assignOrder(orderId) {
+                tg.showPopup({
+                    title: 'Назначение подрядчика',
+                    message: 'Выберите подрядчика для заказа',
+                    buttons: [
+                        {id: 'cancel', type: 'cancel', text: 'Отмена'},
+                        {id: 'assign', type: 'default', text: 'Назначить'}
+                    ]
+                });
+            }
+
+            // Загрузка данных при старте
+            document.addEventListener('DOMContentLoaded', () => {
+                loadActiveOrders();
+            });
+        </script>
     </body>
     </html>
     """
@@ -216,4 +198,23 @@ async def telegram_webhook(request: Request):
         return JSONResponse({"ok": True})
     except Exception as e:
         logger.error(f"Error processing webhook: {e}")
-        return JSONResponse({"error": str(e)}, status_code=500) 
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.post("/api/orders/create")
+async def create_order(request: Request):
+    try:
+        data = await request.json()
+        # Обработка создания заказа
+        return JSONResponse({"success": True})
+    except Exception as e:
+        logger.error(f"Error creating order: {e}")
+        return JSONResponse({"success": False, "error": str(e)})
+
+@router.get("/api/orders/active")
+async def get_active_orders():
+    # Заглушка для демонстрации
+    return JSONResponse([
+        {"id": 1, "title": "Бурение скважины", "location": "ул. Центральная 1"},
+        {"id": 2, "title": "Ремонт оборудования", "location": "пр. Ленина 42"},
+        {"id": 3, "title": "Геологическая разведка", "location": "ул. Полевая 15"}
+    ]) 
