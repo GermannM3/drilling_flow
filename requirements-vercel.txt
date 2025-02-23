@@ -1,3 +1,4 @@
+# Core
 fastapi>=0.100.0,<0.116.0
 uvicorn[standard]==0.34.0
 pydantic==2.10.6
@@ -8,6 +9,7 @@ python-multipart==0.0.20
 sqlalchemy==2.0.38
 asyncpg==0.30.0  # Асинхронный драйвер PostgreSQL
 alembic==1.14.1
+SQLAlchemy-Utils==0.41.1
 
 # Cache & Queue
 redis[hiredis]==5.2.1
@@ -18,4 +20,22 @@ fastapi-cache2==0.2.2
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 slowapi==0.1.9
-certifi==2025.1.31 
+certifi==2025.1.31
+
+# Monitoring
+prometheus-client==0.21.1
+sentry-sdk==2.22.0
+prometheus-fastapi-instrumentator==5.11.2
+
+# Logging
+loguru==0.7.3
+
+# Telegram
+aiogram==3.18.0
+aiohttp==3.11.12
+
+# Testing
+httpx==0.28.1
+
+# Utilities
+tenacity==9.0.0 
