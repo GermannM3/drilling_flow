@@ -1,35 +1,24 @@
 """
 Конфигурация базы данных
 """
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from .config import get_settings
+from app.core.config import get_settings
 
 settings = get_settings()
 
-# Создаем движок базы данных
-engine = create_async_engine(
-    settings.get_database_url,
-    echo=settings.TESTING,
-    future=True
-)
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
-# Создаем фабрику сессий
-AsyncSessionLocal = sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=False
-)
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-async def get_db() -> AsyncSession:
-    """
-    Зависимость для получения сессии БД
-    Yields:
-        AsyncSession: Асинхронная сессия SQLAlchemy
-    """
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close() 
+Base = declarative_base()
+
+def get_db():
+    """Получение сессии БД"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close() 

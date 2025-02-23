@@ -1,7 +1,7 @@
 """
 Сервис управления рейтингами
 """
-from app.db.models import User, Order, OrderRating, OrderStatus
+from app.db.models import User, Order, OrderStatus, OrderRating
 
 async def calculate_contractor_rating(user: User) -> float:
     """

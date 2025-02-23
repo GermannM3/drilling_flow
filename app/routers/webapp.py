@@ -9,7 +9,8 @@ from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 from ..services.geo import YandexGeoService
 from ..db.models import Order, ServiceType, User
-from ..services.auth import get_current_user
+from app.services.auth import get_current_user
+from fastapi.templating import Jinja2Templates
 
 router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
@@ -22,6 +23,9 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 
 # Монтируем статические файлы
 router.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# Путь к директории с шаблонами
+templates = Jinja2Templates(directory="app/templates")
 
 def check_telegram_auth(auth_data):
     """Проверка данных авторизации от Telegram"""
@@ -38,110 +42,14 @@ def check_telegram_auth(auth_data):
     return hash_string == check_hash
 
 @router.get("/", response_class=HTMLResponse)
-async def get_webapp():
-    return f"""
-    <!DOCTYPE html>
-    <html lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DrillFlow Dashboard</title>
-        <script src="https://telegram.org/js/telegram-web-app.js"></script>
-        <link rel="stylesheet" href="/static/webapp/style.css">
-        <script>
-            // Инициализация Telegram WebApp
-            let tg = window.Telegram.WebApp;
-            tg.expand();
-            
-            // Функция для отправки заказа
-            async function submitOrder(form) {{
-                let formData = new FormData(form);
-                let data = {{}};
-                formData.forEach((value, key) => data[key] = value);
-                
-                try {{
-                    let response = await fetch('/api/orders/create', {{
-                        method: 'POST',
-                        headers: {{
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${{tg.initData}}`
-                        }},
-                        body: JSON.stringify(data)
-                    }});
-                    
-                    let result = await response.json();
-                    if (result.status === 'success') {{
-                        tg.showPopup({{
-                            title: 'Успех',
-                            message: 'Заказ успешно создан!',
-                            buttons: [{{type: 'ok'}}]
-                        }});
-                    }}
-                }} catch (error) {{
-                    tg.showAlert('Ошибка при создании заказа: ' + error.message);
-                }}
-                return false;
-            }}
-            
-            // Функция для регистрации
-            async function register() {{
-                try {{
-                    let userData = {{
-                        telegram_id: tg.initDataUnsafe.user.id,
-                        username: tg.initDataUnsafe.user.username,
-                        first_name: tg.initDataUnsafe.user.first_name
-                    }};
-                    
-                    let response = await fetch('/api/auth/register', {{
-                        method: 'POST',
-                        headers: {{
-                            'Content-Type': 'application/json'
-                        }},
-                        body: JSON.stringify(userData)
-                    }});
-                    
-                    let result = await response.json();
-                    if (result.status === 'success') {{
-                        tg.showPopup({{
-                            title: 'Успех',
-                            message: 'Регистрация успешна!',
-                            buttons: [{{type: 'ok'}}]
-                        }});
-                    }}
-                }} catch (error) {{
-                    tg.showAlert('Ошибка при регистрации: ' + error.message);
-                }}
-            }}
-        </script>
-    </head>
-    <body>
-        <div id="app">
-            <form id="orderForm" onsubmit="return submitOrder(this);">
-                <h2>Создать заказ</h2>
-                <div class="form-group">
-                    <label>Тип работ</label>
-                    <select name="service_type" required>
-                        <option value="drilling">Бурение скважины</option>
-                        <option value="repair">Ремонт оборудования</option>
-                        <option value="maintenance">Обслуживание</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Адрес</label>
-                    <input type="text" name="address" required>
-                </div>
-                <div class="form-group">
-                    <label>Описание</label>
-                    <textarea name="description" required></textarea>
-                </div>
-                <button type="submit">Отправить заказ</button>
-            </form>
-            
-            <button onclick="register()">Зарегистрироваться через Telegram</button>
-        </div>
-    </body>
-    </html>
+async def index(request: Request):
     """
+    Главная страница веб-приложения
+    """
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request}
+    )
 
 @router.post("/auth/telegram")
 async def telegram_auth(request: Request):

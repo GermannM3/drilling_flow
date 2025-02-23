@@ -3,7 +3,7 @@
 """
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
-from ..base import Base
+from app.core.database import Base
 
 class Contractor(Base):
     """Модель подрядчика"""
@@ -11,7 +11,7 @@ class Contractor(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    name = Column(String)
+    name = Column(String, nullable=False)
     rating = Column(Float, default=0.0)
     orders_completed = Column(Integer, default=0)
     location = Column(String, nullable=True)

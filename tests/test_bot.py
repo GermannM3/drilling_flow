@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 from aiogram import Bot, Dispatcher
 from app.core.config import get_settings, Settings
 from app.bot.bot import TelegramBot
+from app.bot.handlers import order_handler
 
 @pytest.fixture
 def mock_bot():

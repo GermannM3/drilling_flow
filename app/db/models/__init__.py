@@ -6,6 +6,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 import enum
+from .order import Order
+from .contractor import Contractor
 
 class UserRole(str, enum.Enum):
     ADMIN = "admin"
