@@ -4,7 +4,10 @@ from ..core.config import get_settings
 
 settings = get_settings()
 bot = Bot(token=settings.TELEGRAM_TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher()
+
+# Регистрируем бота в диспетчере
+dp.bot = bot
 
 # Создаем клавиатуру с веб-приложением
 webapp_keyboard = ReplyKeyboardMarkup(
