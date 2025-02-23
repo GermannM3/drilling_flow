@@ -1,7 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
+import logging
 
 router = APIRouter(tags=["webapp"])
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @router.get("/", response_class=HTMLResponse)
 async def get_webapp():
@@ -114,4 +119,42 @@ async def get_about():
             "email": "support@drillflow.ru",
             "telegram": "https://t.me/drillflow_bot"
         }
-    }) 
+    })
+
+@router.post("/webhook")
+async def telegram_webhook(request: Request):
+    try:
+        update = await request.json()
+        logger.info(f"Received update: {update}")
+        
+        # Обработка сообщений
+        if "message" in update:
+            message = update["message"]
+            chat_id = message.get("chat", {}).get("id")
+            text = message.get("text", "")
+            
+            # Здесь добавьте логику обработки команд
+            if text == "/start":
+                return JSONResponse({
+                    "method": "sendMessage",
+                    "chat_id": chat_id,
+                    "text": "Добро пожаловать в DrillFlow! Выберите действие:",
+                    "reply_markup": {
+                        "keyboard": [
+                            [{"text": "📊 Статистика"}, {"text": "📝 Новый заказ"}],
+                            [{"text": "👥 Подрядчики"}, {"text": "⭐️ Рейтинг"}]
+                        ],
+                        "resize_keyboard": True
+                    }
+                })
+            
+            # Обработка других команд
+            return JSONResponse({
+                "method": "sendMessage",
+                "chat_id": chat_id,
+                "text": f"Получена команда: {text}"
+            })
+            
+    except Exception as e:
+        logger.error(f"Error processing webhook: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500) 
