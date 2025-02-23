@@ -5,6 +5,7 @@ from ..core.bot import bot, dp
 import hashlib
 import hmac
 from ..core.config import get_settings
+from openpyxl import load_workbook
 
 router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
@@ -26,29 +27,17 @@ def check_telegram_auth(auth_data):
 
 @router.get("/", response_class=HTMLResponse)
 async def get_webapp():
-    return """
+    return f"""
     <!DOCTYPE html>
     <html lang="ru">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>DrillFlow Dashboard</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
         <script src="https://telegram.org/js/telegram-web-app.js"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            /* Импорт стилей */
-            @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
-            @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
-            @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
-            
-            /* Базовые стили */
-            #webcrumbs { font-family: Inter !important; font-size: 18px !important; }
-            #webcrumbs .min-h-screen { min-height: 100vh; }
-            #webcrumbs .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); }
-            #webcrumbs .from-emerald-800 { --tw-gradient-from: #065f46; }
-            #webcrumbs .to-blue-900 { --tw-gradient-to: #1e3a8a; }
-            /* ... весь остальной CSS ... */
+            {open('app/static/webapp/style.css').read()}
         </style>
     </head>
     <body>
@@ -61,7 +50,8 @@ async def get_webapp():
                             <h1 class="text-2xl font-bold text-emerald-400">Панель Управления DrillFlow</h1>
                         </div>
                         <div class="flex items-center gap-4">
-                            <button onclick="createOrder()" class="bg-emerald-600 text-white px-3 py-1 rounded-lg hover:bg-emerald-700 transition-all transform hover:scale-105 border-2 border-emerald-400">
+                            <button onclick="handleCreateOrder()" 
+                                    class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-all transform hover:scale-105 border-2 border-emerald-400">
                                 Создать заказ
                             </button>
                         </div>
@@ -87,77 +77,34 @@ async def get_webapp():
         </div>
 
         <script>
-            let tg = window.Telegram.WebApp;
-            tg.expand();
-
-            // Загрузка активных заказов
-            async function loadActiveOrders() {
-                try {
-                    const response = await fetch('/api/orders/active');
-                    const orders = await response.json();
-                    const container = document.getElementById('activeOrders');
+            const tg = window.Telegram.WebApp;
+            
+            async function handleCreateOrder() {{
+                try {{
+                    const response = await fetch('/api/orders/create', {{
+                        method: 'POST',
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        body: JSON.stringify({{ /* данные */ }})
+                    }});
                     
-                    orders.forEach(order => {
-                        const orderElement = document.createElement('div');
-                        orderElement.className = 'flex items-center justify-between p-2 hover:bg-slate-700 rounded-lg transition-all';
-                        orderElement.innerHTML = `
-                            <div class="flex items-center gap-4">
-                                <span class="material-symbols-outlined text-emerald-400">drill</span>
-                                <div>
-                                    <p class="font-semibold text-emerald-400">${order.title}</p>
-                                    <p class="text-xs text-emerald-300">${order.location}</p>
-                                </div>
-                            </div>
-                            <button onclick="assignOrder(${order.id})" class="bg-emerald-600 text-white px-3 py-1 rounded-lg hover:bg-emerald-700 transition-all transform hover:scale-105 border-2 border-emerald-400">
-                                Назначить
-                            </button>
-                        `;
-                        container.appendChild(orderElement);
-                    });
-                } catch (error) {
-                    console.error('Ошибка загрузки заказов:', error);
-                }
-            }
+                    if (response.ok) {{
+                        tg.showPopup({{
+                            title: 'Успех',
+                            message: 'Заказ успешно создан!',
+                            buttons: [{{ type: 'ok' }}]
+                        }});
+                        loadActiveOrders();
+                    }}
+                }} catch (error) {{
+                    console.error('Ошибка:', error);
+                    tg.showAlert(error.message);
+                }}
+            }}
 
-            // Создание нового заказа
-            function createOrder() {
-                tg.showPopup({
-                    title: 'Создание заказа',
-                    message: 'Введите детали заказа',
-                    buttons: [
-                        {id: 'cancel', type: 'cancel', text: 'Отмена'},
-                        {id: 'create', type: 'default', text: 'Создать'}
-                    ]
-                }, function(buttonId) {
-                    if (buttonId === 'create') {
-                        // Отправка данных на сервер
-                        fetch('/api/orders/create', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                // Данные заказа
-                            })
-                        });
-                    }
-                });
-            }
-
-            // Назначение подрядчика на заказ
-            function assignOrder(orderId) {
-                tg.showPopup({
-                    title: 'Назначение подрядчика',
-                    message: 'Выберите подрядчика для заказа',
-                    buttons: [
-                        {id: 'cancel', type: 'cancel', text: 'Отмена'},
-                        {id: 'assign', type: 'default', text: 'Назначить'}
-                    ]
-                });
-            }
-
-            // Загрузка данных при старте
-            document.addEventListener('DOMContentLoaded', () => {
-                loadActiveOrders();
-            });
+            // Инициализация WebApp
+            tg.ready();
+            tg.expand();
+            tg.enableClosingConfirmation();
         </script>
     </body>
     </html>
