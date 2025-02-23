@@ -148,4 +148,8 @@ __all__ = ["bot", "dp", "router"]
 # Устанавливаем команды при запуске
 if not settings.TESTING:
     import asyncio
-    asyncio.create_task(setup_bot_commands()) 
+    asyncio.create_task(setup_bot_commands())
+
+async def set_webhook():
+    webhook_url = f"{settings.BOT_WEBHOOK_DOMAIN}/webhook"
+    await bot.set_webhook(webhook_url) 

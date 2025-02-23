@@ -6,8 +6,13 @@ from .routers import orders, contractors, auth, geo, webapp
 from .core.health_check import router as health_router
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
+from app.core.init_db import init_db
 
-app = FastAPI()
+# Инициализируем БД при старте
+init_db()
+
+# Создаем приложение
+app = create_app()
 
 # Добавляем метрики Prometheus
 Instrumentator().instrument(app).expose(app)

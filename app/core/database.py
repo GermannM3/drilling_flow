@@ -1,24 +1,28 @@
 """
 Конфигурация базы данных
 """
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
+import os
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from app.core.config import get_settings
 
-settings = get_settings()
+# Получаем URL базы данных из переменных окружения
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://atributik:BpM3TIh2USFn0KBPj77qh9WerjTCqsad@dpg-cutmu00gph6c73b4gj20-a.oregon-postgres.render.com/drill_flow_db"
+)
 
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+# Создаем движок
+engine = create_async_engine(DATABASE_URL)
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+AsyncSessionLocal = sessionmaker(
+    engine, 
+    class_=AsyncSession,
+    expire_on_commit=False
+)
 
-Base = declarative_base()
-
-def get_db():
+async def get_db():
     """Получение сессии БД"""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close() 
+    async with AsyncSessionLocal() as session:
+        yield session
+
+Base = declarative_base() 

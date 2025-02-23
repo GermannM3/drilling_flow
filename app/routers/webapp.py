@@ -8,9 +8,11 @@ from ..core.config import get_settings
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 from ..services.geo import YandexGeoService
-from ..db.models import Order, ServiceType, User
+from ..db.models import Order, ServiceType, User, OrderStatus
 from app.services.auth import get_current_user
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+from ..core.database import get_db
 
 router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
@@ -99,25 +101,45 @@ async def register_user(user_data: dict):
 @router.post("/api/orders/create")
 async def create_order(
     order_data: dict,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """Создание заказа"""
     try:
-        # Здесь будет логика создания заказа
-        return {"status": "success", "order_id": 1}
+        new_order = Order(
+            client_id=current_user.id,
+            service_type=order_data.get("service_type"),
+            description=order_data.get("description"),
+            address=order_data.get("address"),
+            status=OrderStatus.NEW
+        )
+        db.add(new_order)
+        db.commit()
+        db.refresh(new_order)
+        return {"status": "success", "order_id": new_order.id}
     except Exception as e:
+        logger.error(f"Error creating order: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/orders")
-async def get_orders():
+async def get_orders(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """Получение списка заказов"""
-    return {"orders": []}
+    orders = db.query(Order).filter(
+        Order.client_id == current_user.id
+    ).all()
+    return {"orders": [order.__dict__ for order in orders]}
 
 @router.get("/api/orders/active")
-async def get_active_orders():
-    # Заглушка для демонстрации
-    return JSONResponse([
-        {"id": 1, "title": "Бурение скважины", "location": "ул. Центральная 1"},
-        {"id": 2, "title": "Ремонт оборудования", "location": "пр. Ленина 42"},
-        {"id": 3, "title": "Геологическая разведка", "location": "ул. Полевая 15"}
-    ]) 
+async def get_active_orders(db: Session = Depends(get_db)):
+    """Получение активных заказов"""
+    active_orders = db.query(Order).filter(
+        Order.status == OrderStatus.NEW
+    ).all()
+    return JSONResponse([{
+        "id": order.id,
+        "title": order.description,
+        "location": order.address
+    } for order in active_orders]) 

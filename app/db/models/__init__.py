@@ -1,18 +1,27 @@
 """
-Импорты моделей
+Модели базы данных
 """
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Enum, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 import enum
-from .order import Order
-from .contractor import Contractor
 
 class UserRole(str, enum.Enum):
     ADMIN = "admin"
     CONTRACTOR = "contractor"
     CLIENT = "client"
+
+class OrderStatus(str, enum.Enum):
+    NEW = "new"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+class ServiceType(str, enum.Enum):
+    DRILLING = "drilling"
+    REPAIR = "repair"
+    MAINTENANCE = "maintenance"
 
 class User(Base):
     __tablename__ = "users"
@@ -26,11 +35,6 @@ class User(Base):
     orders = relationship("Order", back_populates="client")
     contractor_orders = relationship("Order", back_populates="contractor")
 
-class ServiceType(str, enum.Enum):
-    DRILLING = "drilling"
-    REPAIR = "repair"
-    MAINTENANCE = "maintenance"
-
 class Order(Base):
     __tablename__ = "orders"
     
@@ -40,7 +44,7 @@ class Order(Base):
     service_type = Column(String)
     description = Column(String)
     address = Column(String)
-    status = Column(String, default="new")
+    status = Column(String, default=OrderStatus.NEW)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
     rating = Column(Float, nullable=True)
@@ -49,4 +53,4 @@ class Order(Base):
     contractor = relationship("User", back_populates="contractor_orders", foreign_keys=[contractor_id])
 
 # Экспортируем модели
-__all__ = ["User", "Order", "ServiceType", "UserRole"] 
+__all__ = ["User", "Order", "ServiceType", "UserRole", "OrderStatus"] 
