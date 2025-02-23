@@ -42,13 +42,13 @@ async def get_webapp():
                 data-request-access="write">
         </script>
         <style>
-            /* Весь ваш CSS код */
+            /* Полный CSS код, который вы предоставили */
             #webcrumbs { font-family: Inter !important; font-size: 18px !important; }
             #webcrumbs .min-h-screen { min-height: 100vh; }
             #webcrumbs .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); }
             #webcrumbs .from-emerald-800 { --tw-gradient-from: #065f46; }
             #webcrumbs .to-blue-900 { --tw-gradient-to: #1e3a8a; }
-            /* ... остальные стили из вашего CSS ... */
+            /* ... весь остальной CSS ... */
         </style>
         <script>
             function onTelegramAuth(user) {
@@ -91,18 +91,88 @@ async def get_webapp():
                                     </div>
                                 </div>
                             </details>
+                            <details class="relative">
+                                <summary class="flex items-center gap-2 cursor-pointer hover:bg-emerald-800 p-2 rounded-lg transition-all text-emerald-400">
+                                    <span class="material-symbols-outlined">account_circle</span>
+                                    <span>Администратор</span>
+                                </summary>
+                            </details>
                         </div>
                     </header>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-                        <!-- Карточки статистики -->
                         <div class="bg-emerald-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500">
-                            <!-- ... и так далее для всех карточек ... -->
+                            <div class="flex items-center gap-4">
+                                <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">engineering</span>
+                                <div class="text-emerald-400">
+                                    <p class="text-xl sm:text-2xl font-bold">247</p>
+                                    <p class="text-sm sm:text-base">Активных Подрядчиков</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-blue-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500">
+                            <div class="flex items-center gap-4">
+                                <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">assignment</span>
+                                <div class="text-emerald-400">
+                                    <p class="text-xl sm:text-2xl font-bold">1,893</p>
+                                    <p class="text-sm sm:text-base">Выполненных Заказов</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-emerald-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500">
+                            <div class="flex items-center gap-4">
+                                <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">pending</span>
+                                <div class="text-emerald-400">
+                                    <p class="text-xl sm:text-2xl font-bold">42</p>
+                                    <p class="text-sm sm:text-base">Ожидающих Заказов</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-blue-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500">
+                            <div class="flex items-center gap-4">
+                                <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">stars</span>
+                                <div class="text-emerald-400">
+                                    <p class="text-xl sm:text-2xl font-bold">4.8</p>
+                                    <p class="text-sm sm:text-base">Средний Рейтинг</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                        <!-- Секции с заказами и подрядчиками -->
+                        <div class="lg:col-span-2 bg-slate-800 rounded-xl border-2 sm:border-4 border-emerald-500 p-4 sm:p-6">
+                            <h2 class="text-lg sm:text-xl font-bold mb-4 text-emerald-400">Последние Заказы</h2>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-2 sm:p-4 hover:bg-slate-700 rounded-lg transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <span class="material-symbols-outlined text-emerald-400">drill</span>
+                                        <div class="text-emerald-400">
+                                            <p class="font-semibold">Бурение Скважины</p>
+                                            <p class="text-xs sm:text-sm text-emerald-300">ул. Главная 123, Город</p>
+                                        </div>
+                                    </div>
+                                    <button class="bg-emerald-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-emerald-700 transition-all transform hover:scale-105 border-2 border-emerald-400 text-sm sm:text-base">
+                                        Назначить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800 rounded-xl border-2 sm:border-4 border-emerald-500 p-4 sm:p-6">
+                            <h2 class="text-lg sm:text-xl font-bold mb-4 text-emerald-400">Лучшие Подрядчики</h2>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-2 hover:bg-slate-700 rounded-lg transition-all">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-emerald-400">account_circle</span>
+                                        <p class="font-semibold text-emerald-400 text-sm sm:text-base">Иван Иванов</p>
+                                    </div>
+                                    <div class="flex items-center text-emerald-400">
+                                        <span class="material-symbols-outlined text-yellow-500">star</span>
+                                        <span class="text-sm sm:text-base">4.9</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
