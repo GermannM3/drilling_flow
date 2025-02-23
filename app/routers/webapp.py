@@ -6,10 +6,18 @@ import hashlib
 import hmac
 from ..core.config import get_settings
 from openpyxl import load_workbook
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 
 router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+static_path = Path(__file__).parent.parent / "static" / "webapp"
+static_path.mkdir(parents=True, exist_ok=True)  # Создаем директорию если не существует
+
+# Затем монтируйте статику
+router.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 def check_telegram_auth(auth_data):
     """Проверка данных авторизации от Telegram"""
