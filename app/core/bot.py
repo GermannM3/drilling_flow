@@ -1,10 +1,12 @@
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, Router
 from aiogram.types import WebAppInfo, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command
 from ..core.config import get_settings
 
 settings = get_settings()
 bot = Bot(token=settings.TELEGRAM_TOKEN)
 dp = Dispatcher()
+router = Router()
 
 # Регистрируем бота в диспетчере
 dp.bot = bot
@@ -22,25 +24,24 @@ webapp_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-@dp.message_handler(commands=['start'])
+@router.message(Command("start"))
 async def start_command(message):
     await message.answer(
-        "Добро пожаловать в DrillFlow! Выберите действие или откройте веб-приложение:",
+        "Добро пожаловать в DrillFlow!\n\n" +
+        "Используйте кнопки меню для навигации:",
         reply_markup=webapp_keyboard
     )
 
-@dp.message_handler(lambda message: message.text == "📊 Статистика")
+@router.message(lambda m: m.text == "📊 Статистика")
 async def statistics(message):
-    stats_text = """
-📊 *Статистика DrillFlow*
-• Активных подрядчиков: 247
-• Выполненных заказов: 1,893
-• Ожидающих заказов: 42
-• Средний рейтинг: 4.8⭐️
-    """
-    await message.answer(stats_text, parse_mode="Markdown")
+    await message.answer(
+        "Статистика за последний месяц:\n\n" +
+        "Новых заказов: 156\n" +
+        "Выполнено заказов: 142\n" +
+        "Активных подрядчиков: 48"
+    )
 
-@dp.message_handler(lambda message: message.text == "📝 Новый заказ")
+@router.message(lambda m: m.text == "📝 Новый заказ")
 async def new_order(message):
     await message.answer(
         "Создайте новый заказ через веб-интерфейс:",
@@ -52,23 +53,30 @@ async def new_order(message):
         )
     )
 
-@dp.message_handler(lambda message: message.text == "👥 Подрядчики")
+@router.message(lambda m: m.text == "👥 Подрядчики")
 async def contractors(message):
-    await message.answer("Список доступных подрядчиков:\n\n" + 
-                        "1. ООО 'БурСтрой' - ⭐️4.9\n" +
-                        "2. ИП Иванов - ⭐️4.8\n" +
-                        "3. АО 'ГеоДрилл' - ⭐️4.7")
+    await message.answer(
+        "Список доступных подрядчиков:\n\n" + 
+        "1. ООО 'БурСтрой' - ⭐️4.9\n" +
+        "2. ИП Иванов - ⭐️4.8\n" +
+        "3. АО 'ГеоДрилл' - ⭐️4.7"
+    )
 
-@dp.message_handler(lambda message: message.text == "⭐️ Рейтинг")
+@router.message(lambda m: m.text == "⭐️ Рейтинг")
 async def rating(message):
-    await message.answer("Ваш текущий рейтинг: ⭐️4.8\n\n" +
-                        "Выполнено заказов: 12\n" +
-                        "Положительных отзывов: 11\n" +
-                        "Статус: Надёжный партнёр 🏆")
+    await message.answer(
+        "Ваш текущий рейтинг: ⭐️4.8\n\n" +
+        "Выполнено заказов: 12\n" +
+        "Положительных отзывов: 11\n" +
+        "Статус: Надёжный партнёр 🏆"
+    )
 
-@dp.message_handler()
+@router.message()
 async def handle_message(message):
     if message.web_app_data:
         await message.answer(f"Получены данные: {message.web_app_data.data}")
     else:
-        await message.answer("Пожалуйста, используйте кнопки меню для навигации.") 
+        await message.answer("Пожалуйста, используйте кнопки меню для навигации.")
+
+# Регистрируем роутер в диспетчере
+dp.include_router(router) 

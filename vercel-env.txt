@@ -25,11 +25,11 @@ SUPABASE_URL=https://daauaksfcihrhaxqcpdv.supabase.co
 SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhYXVha3NmY2locmhheHFjcGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzMjIzMTksImV4cCI6MjA1NTg5ODMxOX0.iFq2AW16YPqAuJJ1yIiT6JJZ4MBusbO4enHFouMSvA8
 
 # Telegram бот
-TELEGRAM_TOKEN=@your-telegram-token
-BOT_WEBHOOK_URL=https://[your-vercel-domain].vercel.app/webhook
-BOT_ADMIN_GROUP_ID=-1001234567890
-BOT_SUPPORT_GROUP_ID=-1001234567891
+TELEGRAM_TOKEN=7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs
+BOT_WEBHOOK_URL=https://drilling-flow.vercel.app/webhook
+BOT_ADMIN_GROUP_ID=реальный_id_админ_группы  # Например: -1001234567890
+BOT_SUPPORT_GROUP_ID=реальный_id_группы_поддержки  # Например: -1001234567891
 
 # CORS и хосты
-ALLOWED_HOSTS=[your-vercel-domain].vercel.app
-CORS_ORIGINS=https://[your-vercel-domain].vercel.app 
+ALLOWED_HOSTS=drilling-flow.vercel.app
+CORS_ORIGINS=https://drilling-flow.vercel.app 
