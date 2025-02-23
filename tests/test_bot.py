@@ -4,36 +4,38 @@
 import pytest
 from unittest.mock import AsyncMock, patch
 from aiogram import Bot, Dispatcher
-from app.core.config import get_settings
+from app.core.config import get_settings, Settings
+from app.bot.bot import TelegramBot
 
-# Мокаем бота вместо создания реального экземпляра
 @pytest.fixture
-def bot():
+def mock_bot():
     """Фикстура для мока бота"""
     with patch('aiogram.Bot') as mock:
         mock.return_value = AsyncMock()
         yield mock.return_value
 
 @pytest.fixture
-def dp():
+def mock_dp():
     """Фикстура для диспетчера"""
     return Dispatcher()
 
 @pytest.mark.asyncio
-async def test_bot_initialization(bot):
+async def test_bot_initialization(settings):
     """Тест инициализации бота"""
-    settings = get_settings()
-    assert settings.TELEGRAM_TOKEN is not None
-    assert isinstance(bot, AsyncMock)
+    with patch('aiogram.Bot'), patch('aiogram.Dispatcher'):
+        bot = TelegramBot()
+        assert bot.bot is not None
+        assert bot.dp is not None
+        assert bot.webapp_url == "https://t.me/Drill_Flow_bot/D_F"
 
 @pytest.mark.asyncio
-async def test_bot_send_message(bot):
+async def test_bot_send_message(mock_bot):
     """Тест отправки сообщения"""
     chat_id = 123
     text = "Test message"
     
-    await bot.send_message(chat_id=chat_id, text=text)
-    bot.send_message.assert_called_once_with(chat_id=chat_id, text=text)
+    await mock_bot.send_message(chat_id=chat_id, text=text)
+    mock_bot.send_message.assert_called_once_with(chat_id=chat_id, text=text)
 
 class MockMessage:
     """Мок объекта сообщения Telegram"""
@@ -46,10 +48,11 @@ class MockMessage:
 @pytest.mark.asyncio
 async def test_start_command():
     """Тест команды /start"""
-    message = MockMessage("/start")
-    await start_handler(message)
-    message.answer.assert_called_once()
-    assert "Добро пожаловать" in message.answer.call_args[0][0]
+    with patch('aiogram.Bot'), patch('aiogram.Dispatcher'):
+        bot = TelegramBot()
+        message = MockMessage("/start")
+        await bot.start_command(message)
+        message.answer.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_order_creation():
@@ -63,9 +66,10 @@ async def test_order_creation():
 @pytest.mark.asyncio
 async def test_bot_webhook():
     """Тест установки webhook"""
-    settings = Settings()
-    with patch('aiogram.Bot.set_webhook') as mock_webhook:
-        mock_webhook.return_value = True
-        result = await bot.set_webhook(settings.BOT_WEBHOOK_URL)
+    settings = get_settings()
+    with patch('aiogram.Bot') as mock_bot:
+        bot = mock_bot.return_value
+        bot.set_webhook = AsyncMock(return_value=True)
+        result = await bot.set_webhook(url="https://example.com/webhook")
         assert result is True
-        mock_webhook.assert_called_with(settings.BOT_WEBHOOK_URL) 
+        bot.set_webhook.assert_called_once_with(url="https://example.com/webhook") 

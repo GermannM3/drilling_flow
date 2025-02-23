@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+# Добавляем корневую директорию проекта в PYTHONPATH
+root_dir = Path(__file__).parent.parent
+sys.path.append(str(root_dir))
+
+# Фикстуры для тестов
 import pytest
 from typing import Generator
 from fastapi.testclient import TestClient
@@ -39,27 +47,23 @@ def client(settings) -> Generator:
         yield c
 
 @pytest.fixture(scope="session")
-async def engine(settings):
-    """Фикстура тестового движка БД"""
+def test_db():
+    """Создает тестовую БД"""
+    settings = get_test_settings()
+    
     if database_exists(settings.DATABASE_URL):
         drop_database(settings.DATABASE_URL)
     
     create_database(settings.DATABASE_URL)
-    engine = create_async_engine(
-        settings.DATABASE_URL,
-        echo=False,
-        future=True
-    )
     
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Создаем таблицы
+    engine = create_async_engine(settings.DATABASE_URL)
+    Base.metadata.create_all(bind=engine)
     
-    try:
-        yield engine
-    finally:
-        await engine.dispose()
-        if database_exists(settings.DATABASE_URL):
-            drop_database(settings.DATABASE_URL)
+    yield engine
+    
+    # Удаляем БД после тестов
+    drop_database(settings.DATABASE_URL)
 
 @pytest.fixture
 async def db_session(engine) -> AsyncSession:
