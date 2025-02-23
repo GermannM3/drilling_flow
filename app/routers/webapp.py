@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import logging
 from ..core.bot import bot
+from ..core.bot import dp
 
 router = APIRouter(tags=["webapp"])
 
@@ -128,19 +129,8 @@ async def telegram_webhook(request: Request):
         update = await request.json()
         logger.info(f"Received update: {update}")
         
-        # Используем бота для отправки сообщений
-        if "message" in update:
-            message = update["message"]
-            chat_id = message.get("chat", {}).get("id")
-            
-            if message.get("text") == "/start":
-                await bot.send_message(
-                    chat_id=chat_id,
-                    text="Добро пожаловать в DrillFlow! Выберите действие или откройте веб-приложение:",
-                    reply_markup=webapp_keyboard
-                )
-                return JSONResponse({"ok": True})
-                
+        # Передаем обновление в диспетчер бота
+        await dp.process_update(update)
         return JSONResponse({"ok": True})
             
     except Exception as e:
