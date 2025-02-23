@@ -53,4 +53,14 @@ class Order(Base):
     contractor = relationship("User", back_populates="contractor_orders", foreign_keys=[contractor_id])
 
 # Экспортируем модели
-__all__ = ["User", "Order", "ServiceType", "UserRole", "OrderStatus"] 
+__all__ = [
+    "User", 
+    "Order", 
+    "ServiceType", 
+    "UserRole", 
+    "OrderStatus",
+    "OrderRating"
+]
+
+# Добавляем импорт OrderRating если он существует
+from .order_rating import OrderRating 
