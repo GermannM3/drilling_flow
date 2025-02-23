@@ -13,7 +13,7 @@ router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-static_path = Path(__file__).parent.parent / "static" / "webapp"
+static_path = Path(__file__).parent.parent.parent / "static" / "webapp"
 static_path.mkdir(parents=True, exist_ok=True)  # Создаем директорию если не существует
 
 # Затем монтируйте статику
@@ -45,7 +45,7 @@ async def get_webapp():
         <script src="https://telegram.org/js/telegram-web-app.js"></script>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            {open('app/static/webapp/style.css').read()}
+            {open(static_path / 'style.css').read() if (static_path / 'style.css').exists() else ''}
         </style>
     </head>
     <body>
