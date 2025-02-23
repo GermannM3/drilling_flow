@@ -13,12 +13,13 @@ router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# Путь к статическим файлам относительно корня проекта
-static_path = Path.cwd() / "static" / "webapp"
-static_path.mkdir(parents=True, exist_ok=True)
+# Определяем пути к статическим файлам
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+STATIC_DIR = BASE_DIR / "static" / "webapp"
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
 
 # Монтируем статические файлы
-router.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+router.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 def check_telegram_auth(auth_data):
     """Проверка данных авторизации от Telegram"""
@@ -45,7 +46,7 @@ async def get_webapp():
         <title>DrillFlow Dashboard</title>
         <script src="https://telegram.org/js/telegram-web-app.js"></script>
         <style>
-            {open(static_path / 'style.css').read() if (static_path / 'style.css').exists() else ''}
+            {open(STATIC_DIR / 'style.css').read() if (STATIC_DIR / 'style.css').exists() else ''}
         </style>
     </head>
     <body>

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "vercel-build": "pip install -r requirements-vercel.txt && alembic upgrade head",
-    "build": "npm install && mkdir -p static/webapp && npx tailwindcss -i ./static/webapp/style.css -o ./static/webapp/output.css --minify",
+    "build": "npm install && mkdir -p static/webapp app/static/webapp && npx tailwindcss -i ./static/webapp/style.css -o ./static/webapp/output.css --minify && cp ./static/webapp/output.css ./app/static/webapp/output.css",
     "start": "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT",
     "dev": "python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
     "prod": "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4",
