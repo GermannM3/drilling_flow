@@ -1,29 +1,99 @@
+"""
+Конфигурация приложения
+"""
+from functools import lru_cache
+from typing import Optional, List
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    # Базовые настройки
-    POSTGRES_SERVER: str = "db"
-    POSTGRES_USER: str = "atributik"
-    POSTGRES_PASSWORD: str = "1213276"
-    POSTGRES_DB: str = "drillflow_db"
+    """Настройки приложения"""
+    # Основные настройки
+    PROJECT_NAME: str = "DrillFlow"
+    VERSION: str = "0.1.0"
+    API_V1_STR: str = "/api/v1"
+    SECRET_KEY: str = "your-secret-key"
     
-    # API ключи
-    TELEGRAM_TOKEN: str = "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs"
-    YANDEX_API_KEY: str = "fa6c1c44-4070-4d63-819b-bd6fbb5bae9e"
+    # Настройки сервера
+    HOST: str = "0.0.0.0"
+    PORT: int = 8080
+    WORKERS: int = 4
+    BACKLOG: int = 2048
+    MAX_REQUESTS: int = 10000
+    KEEPALIVE: int = 120
     
-    # Безопасность
+    # База данных
+    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "drillflow"
+    DATABASE_URL: Optional[str] = None
+    POSTGRES_POOL_SIZE: int = 20
+    POSTGRES_MAX_OVERFLOW: int = 30
+    POSTGRES_POOL_TIMEOUT: int = 30
+
+    # Redis
+    REDIS_HOST: str = "redis"
+    REDIS_PORT: int = 6379
+    REDIS_URL: str = "redis://redis:6379/0"
+    REDIS_MAX_CONNECTIONS: int = 100
+    REDIS_SOCKET_TIMEOUT: int = 5
+    REDIS_SOCKET_CONNECT_TIMEOUT: int = 5
+
+    # Кэширование
+    CACHE_TTL: int = 300
+    CACHE_PREFIX: str = "drillflow"
+
+    # JWT
     JWT_SECRET_KEY: str = "ElderCade"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    
-    # Сервер
-    HOST: str = "0.0.0.0"
-    PORT: int = 8080
-    
-    # Опциональные настройки
-    GOOGLE_MAPS_API_KEY: str = ""
-    SECRET_KEY: str = "default-secret-key"
-    ALLOWED_HOSTS: list = ["*"]
-    CORS_ORIGINS: list = ["*"]
 
-settings = Settings() 
+    # Rate Limiting
+    RATE_LIMIT_PER_SECOND: int = 100
+
+    # Мониторинг
+    SENTRY_DSN: str = "your-sentry-dsn"
+    PROMETHEUS_MULTIPROC_DIR: str = "/tmp"
+    METRICS_PORT: int = 9090
+
+    # Логирование
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: str = "json"
+    LOG_PATH: str = "/app/logs"
+
+    # API Keys
+    YANDEX_API_KEY: str = "your-yandex-api-key"
+    TELEGRAM_TOKEN: str = "your-telegram-token"
+
+    # CORS
+    ORIGINS: List[str] = ["*"]
+
+    # Тестирование
+    TESTING: bool = False
+    ENV: str = "production"
+
+    @property
+    def get_database_url(self) -> str:
+        """Формирует URL для подключения к базе данных"""
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+            
+        return (
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:"
+            f"{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+        )
+
+    class Config:
+        """Настройки для pydantic"""
+        env_file = ".env"
+        case_sensitive = True
+        extra = "allow"  # Разрешаем дополнительные поля из .env
+
+@lru_cache()
+def get_settings() -> Settings:
+    """
+    Возвращает объект настроек приложения
+    Returns:
+        Settings: Объект с настройками
+    """
+    return Settings() 

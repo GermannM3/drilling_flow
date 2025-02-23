@@ -1,46 +1,30 @@
+"""
+Настройка логирования
+"""
 import logging
-import sys
-from loguru import logger
+from typing import Any
 
-class InterceptHandler(logging.Handler):
-    def emit(self, record):
-        try:
-            level = logger.level(record.levelname).name
-        except ValueError:
-            level = record.levelno
+def setup_logging() -> Any:
+    """
+    Настройка логирования приложения
+    Returns:
+        Logger: Настроенный логгер
+    """
+    # Создаем логгер
+    logger = logging.getLogger("drillflow")
+    logger.setLevel(logging.INFO)
 
-        frame, depth = logging.currentframe(), 2
-        while frame.f_code.co_filename == logging.__file__:
-            frame = frame.f_back
-            depth += 1
+    # Создаем обработчик
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.INFO)
 
-        logger.opt(depth=depth, exception=record.exc_info).log(
-            level, record.getMessage()
-        )
+    # Создаем форматтер
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    handler.setFormatter(formatter)
 
-def setup_logging(settings):
-    # Добавим структурированное логирование
-    config = {
-        "handlers": [
-            {
-                "sink": sys.stdout,
-                "format": "{time} | {level} | {message} | {extra}",
-                "level": "INFO",
-                "serialize": True,
-            },
-            {
-                "sink": "logs/error.log",
-                "format": "{time} | {level} | {message} | {extra}",
-                "level": "ERROR",
-                "rotation": "100 MB",
-                "retention": "1 month",
-            }
-        ],
-        "extra": {
-            "app_name": "DrillFlow",
-            "environment": settings.ENVIRONMENT
-        }
-    }
-    
-    logger.configure(**config)
+    # Добавляем обработчик к логгеру
+    logger.addHandler(handler)
+
     return logger 

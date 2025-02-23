@@ -1,39 +1,33 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy.pool import QueuePool
-from .config import settings
+"""
+Конфигурация базы данных
+"""
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+from .config import get_settings
 
-# Синхронное подключение
-engine = create_engine(
-    settings.DATABASE_URL,
-    poolclass=QueuePool,
-    pool_size=20,
-    max_overflow=10,
-    pool_timeout=30,
-    pool_recycle=1800,
-    echo=settings.ENVIRONMENT == "dev"
+settings = get_settings()
+
+# Создаем движок базы данных
+engine = create_async_engine(
+    settings.get_database_url,
+    echo=settings.TESTING,
+    future=True
 )
 
-# Асинхронное подключение
-async_engine = create_async_engine(
-    settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://"),
-    pool_size=20,
-    max_overflow=10,
-    pool_timeout=30,
-    pool_recycle=1800,
-    echo=settings.ENVIRONMENT == "dev"
-)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Создаем фабрику сессий
 AsyncSessionLocal = sessionmaker(
-    async_engine, class_=AsyncSession, expire_on_commit=False
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autoflush=False
 )
 
-Base = declarative_base()
-
-# Dependency для FastAPI
-async def get_db():
+async def get_db() -> AsyncSession:
+    """
+    Зависимость для получения сессии БД
+    Yields:
+        AsyncSession: Асинхронная сессия SQLAlchemy
+    """
     async with AsyncSessionLocal() as session:
         try:
             yield session

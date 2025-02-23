@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from ..core.config import get_settings, Settings
 
-router = APIRouter()
+router = APIRouter(tags=["webapp"])
 
 # Путь к статическим файлам
 static_path = Path(__file__).parent.parent / "static" / "webapp"
@@ -11,13 +12,10 @@ static_path = Path(__file__).parent.parent / "static" / "webapp"
 # Монтируем статические файлы
 router.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
-@router.get("/webapp")
-async def get_webapp():
-    """Возвращает HTML страницу веб-приложения"""
-    index_path = static_path / "index.html"
-    if not index_path.exists():
-        raise HTTPException(status_code=404, detail="Web App not found")
-    return FileResponse(index_path)
+@router.get("/")
+async def get_webapp(settings: Settings = Depends(get_settings)):
+    """Получение веб-интерфейса"""
+    return {"message": "Web interface"}
 
 router = APIRouter(prefix="/about", tags=["about"])
 
