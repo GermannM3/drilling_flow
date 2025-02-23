@@ -39,10 +39,15 @@ async def statistics(message):
 
 @dp.message_handler(lambda message: message.text == "📝 Новый заказ")
 async def new_order(message):
-    order_keyboard = InlineKeyboardMarkup().add(
-        InlineKeyboardButton("Создать заказ", web_app=WebAppInfo(url="https://drilling-flow.vercel.app/new-order"))
+    await message.answer(
+        "Создайте новый заказ через веб-интерфейс:",
+        reply_markup=InlineKeyboardMarkup().add(
+            InlineKeyboardButton(
+                "Открыть веб-приложение",
+                web_app=WebAppInfo(url="https://drilling-flow.vercel.app")
+            )
+        )
     )
-    await message.answer("Создайте новый заказ через веб-интерфейс:", reply_markup=order_keyboard)
 
 @dp.message_handler(lambda message: message.text == "👥 Подрядчики")
 async def contractors(message):

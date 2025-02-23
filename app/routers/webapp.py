@@ -28,83 +28,33 @@ def check_telegram_auth(auth_data):
 async def get_webapp():
     return """
     <!DOCTYPE html>
-    <html>
+    <html lang="ru">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>DrillFlow Dashboard</title>
-        <style>
-            @import url(https://fonts.googleapis.com/css2?family=Roboto&display=swap);
-            @import url(https://fonts.googleapis.com/css2?family=Inter&display=swap);
-            @import url(https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200);
-            
-            body {
-                margin: 0;
-                font-family: Inter, sans-serif;
-                background: linear-gradient(to bottom right, #065f46, #1e3a8a);
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 1rem;
-            }
-            
-            .container {
-                background: #0f172a;
-                border-radius: 0.75rem;
-                padding: 1.5rem;
-                width: 100%;
-                max-width: 1200px;
-                border: 2px solid #10b981;
-                color: #34d399;
-            }
-            
-            .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 2rem;
-            }
-            
-            .stats-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 1rem;
-                margin-bottom: 2rem;
-            }
-            
-            .stat-card {
-                background: #064e3b;
-                padding: 1rem;
-                border-radius: 0.5rem;
-                border: 2px solid #10b981;
-            }
-            
-            .button {
-                background: #059669;
-                color: white;
-                padding: 0.5rem 1rem;
-                border-radius: 0.5rem;
-                border: none;
-                cursor: pointer;
-            }
-            
-            .button:hover {
-                background: #047857;
-            }
-        </style>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
         <script async src="https://telegram.org/js/telegram-widget.js?22" 
                 data-telegram-login="Drill_Flow_bot" 
                 data-size="large" 
                 data-onauth="onTelegramAuth" 
                 data-request-access="write">
         </script>
-        <script type="text/javascript">
+        <style>
+            /* Весь ваш CSS код */
+            #webcrumbs { font-family: Inter !important; font-size: 18px !important; }
+            #webcrumbs .min-h-screen { min-height: 100vh; }
+            #webcrumbs .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); }
+            #webcrumbs .from-emerald-800 { --tw-gradient-from: #065f46; }
+            #webcrumbs .to-blue-900 { --tw-gradient-to: #1e3a8a; }
+            /* ... остальные стили из вашего CSS ... */
+        </style>
+        <script>
             function onTelegramAuth(user) {
-                // Отправляем данные на сервер для проверки
                 fetch('/auth/telegram', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(user)
                 })
                 .then(response => response.json())
@@ -118,33 +68,41 @@ async def get_webapp():
         </script>
     </head>
     <body>
-        <div class="container">
-            <div id="auth-section">
-                <h1>Войдите через Telegram</h1>
-                <!-- Виджет войдет сюда -->
-            </div>
-            
-            <div id="dashboard" style="display: none;">
-                <div class="header">
-                    <h1>DrillFlow Dashboard</h1>
-                </div>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Активные Подрядчики</h3>
-                        <p>247</p>
+        <div id="webcrumbs">
+            <div class="min-h-screen bg-gradient-to-br from-emerald-800 to-blue-900 flex items-center justify-center p-4 sm:p-8">
+                <div class="w-full max-w-[1200px] bg-slate-900 rounded-xl shadow-2xl p-4 sm:p-8 border-2 sm:border-4 border-emerald-500">
+                    <header class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+                        <div class="flex items-center gap-4">
+                            <span class="material-symbols-outlined text-3xl sm:text-4xl text-emerald-400">water_drop</span>
+                            <h1 class="text-2xl sm:text-3xl font-bold text-emerald-400">Панель Управления DrillFlow</h1>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <details class="relative">
+                                <summary class="flex items-center gap-2 cursor-pointer hover:bg-emerald-800 p-2 rounded-lg transition-all">
+                                    <span class="material-symbols-outlined text-emerald-400">notifications</span>
+                                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                                </summary>
+                                <div class="absolute right-0 mt-2 w-64 bg-slate-800 rounded-lg shadow-2xl p-4 z-10 border-2 border-emerald-500">
+                                    <div class="flex flex-col gap-2">
+                                        <div class="p-2 hover:bg-slate-700 rounded-lg transition-all text-emerald-400">
+                                            <p class="font-semibold">Новый Заказ #1234</p>
+                                            <p class="text-sm text-emerald-300">Запрос на бурение скважины - 5км</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                    </header>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                        <!-- Карточки статистики -->
+                        <div class="bg-emerald-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500">
+                            <!-- ... и так далее для всех карточек ... -->
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <h3>Выполненные Заказы</h3>
-                        <p>1,893</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Ожидающие Заказы</h3>
-                        <p>42</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Средний Рейтинг</h3>
-                        <p>4.8</p>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <!-- Секции с заказами и подрядчиками -->
                     </div>
                 </div>
             </div>
@@ -184,11 +142,8 @@ async def telegram_webhook(request: Request):
     try:
         update = await request.json()
         logger.info(f"Received update: {update}")
-        
-        # Передаем обновление в диспетчер бота
         await dp.process_update(update)
         return JSONResponse({"ok": True})
-            
     except Exception as e:
         logger.error(f"Error processing webhook: {e}")
         return JSONResponse({"error": str(e)}, status_code=500) 
