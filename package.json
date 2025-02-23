@@ -1,0 +1,9 @@
+{
+  "name": "drillflow",
+  "version": "1.0.0",
+  "scripts": {
+    "vercel-build": "pip install -r requirements.txt && python app/main.py",
+    "build": "pip install -r requirements.txt && python app/main.py",
+    "start": "python app/main.py"
+  }
+} 
