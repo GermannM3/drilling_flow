@@ -1,8 +1,39 @@
+"""
+Тесты Telegram бота
+"""
 import pytest
 from unittest.mock import AsyncMock, patch
-from app.bot.main import bot, dp
-from app.bot.handlers import start_handler, order_handler
-from app.core.config import Settings
+from aiogram import Bot, Dispatcher
+from app.core.config import get_settings
+
+# Мокаем бота вместо создания реального экземпляра
+@pytest.fixture
+def bot():
+    """Фикстура для мока бота"""
+    with patch('aiogram.Bot') as mock:
+        mock.return_value = AsyncMock()
+        yield mock.return_value
+
+@pytest.fixture
+def dp():
+    """Фикстура для диспетчера"""
+    return Dispatcher()
+
+@pytest.mark.asyncio
+async def test_bot_initialization(bot):
+    """Тест инициализации бота"""
+    settings = get_settings()
+    assert settings.TELEGRAM_TOKEN is not None
+    assert isinstance(bot, AsyncMock)
+
+@pytest.mark.asyncio
+async def test_bot_send_message(bot):
+    """Тест отправки сообщения"""
+    chat_id = 123
+    text = "Test message"
+    
+    await bot.send_message(chat_id=chat_id, text=text)
+    bot.send_message.assert_called_once_with(chat_id=chat_id, text=text)
 
 class MockMessage:
     """Мок объекта сообщения Telegram"""

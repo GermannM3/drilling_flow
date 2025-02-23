@@ -1,8 +1,11 @@
+"""
+Тесты базы данных
+"""
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+from app.db.models import Order, Contractor, User
 from app.db.session import get_db
-from app.models.order import Order
-from app.models.contractor import Contractor
 
 @pytest.fixture
 async def db_session():
@@ -14,8 +17,13 @@ async def db_session():
 @pytest.mark.asyncio
 async def test_create_order(db_session: AsyncSession):
     """Тест создания заказа"""
+    # Создаем пользователя
+    user = User(email="test@example.com", hashed_password="test")
+    db_session.add(user)
+    await db_session.commit()
+
     order = Order(
-        client_id=1,
+        client_id=user.id,
         service_type="drilling",
         location="55.7558,37.6173",
         description="Test order"
@@ -28,8 +36,13 @@ async def test_create_order(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_contractor_rating(db_session: AsyncSession):
     """Тест системы рейтинга"""
+    # Создаем пользователя
+    user = User(email="contractor@example.com", hashed_password="test")
+    db_session.add(user)
+    await db_session.commit()
+
     contractor = Contractor(
-        user_id=1,
+        user_id=user.id,
         name="Test Contractor",
         rating=4.5,
         orders_completed=10

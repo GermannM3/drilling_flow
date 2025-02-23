@@ -1,3 +1,6 @@
+"""
+Тесты геолокационного сервиса
+"""
 import pytest
 from app.services.geo import calculate_distance, find_nearest_contractors
 
@@ -11,11 +14,12 @@ def test_distance_calculation(coords1, coords2, expected):
     assert abs(distance - expected) <= 1  # Погрешность 1 км
 
 @pytest.mark.asyncio
-async def test_find_contractors():
+async def test_find_contractors(db_session):
     """Тест поиска ближайших подрядчиков"""
     order_location = (55.7558, 37.6173)  # Москва
     contractors = await find_nearest_contractors(
-        order_location,
+        location=order_location,
+        db=db_session,
         max_distance=100,
         required_rating=4.0
     )

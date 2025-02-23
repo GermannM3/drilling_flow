@@ -17,7 +17,8 @@ def get_test_settings() -> Settings:
         POSTGRES_USER="test",
         POSTGRES_PASSWORD="test",
         POSTGRES_SERVER="localhost",
-        TELEGRAM_TOKEN="test_token"
+        TELEGRAM_TOKEN="test_token",  # Тестовый токен для бота
+        YANDEX_API_KEY="test_key"     # Тестовый ключ API
     )
 
 # Создаем тестовое приложение

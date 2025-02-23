@@ -3,7 +3,7 @@
 """
 from functools import lru_cache
 from typing import Optional, List
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """Настройки приложения"""
@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "DrillFlow"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = "your-secret-key"
+    SECRET_KEY: str = "ElderCade"
     
     # Настройки сервера
     HOST: str = "0.0.0.0"
@@ -51,11 +51,6 @@ class Settings(BaseSettings):
     # Rate Limiting
     RATE_LIMIT_PER_SECOND: int = 100
 
-    # Мониторинг
-    SENTRY_DSN: str = "your-sentry-dsn"
-    PROMETHEUS_MULTIPROC_DIR: str = "/tmp"
-    METRICS_PORT: int = 9090
-
     # Логирование
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"
@@ -63,7 +58,7 @@ class Settings(BaseSettings):
 
     # API Keys
     YANDEX_API_KEY: str = "your-yandex-api-key"
-    TELEGRAM_TOKEN: str = "your-telegram-token"
+    TELEGRAM_TOKEN: str = "test_token"  # Для тестов
 
     # CORS
     ORIGINS: List[str] = ["*"]
@@ -83,11 +78,11 @@ class Settings(BaseSettings):
             f"{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
         )
 
-    class Config:
-        """Настройки для pydantic"""
-        env_file = ".env"
-        case_sensitive = True
-        extra = "allow"  # Разрешаем дополнительные поля из .env
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="allow"
+    )
 
 @lru_cache()
 def get_settings() -> Settings:
