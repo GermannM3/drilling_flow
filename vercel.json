@@ -2,40 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "app/main.py",
-      "use": "@vercel/python",
-      "config": {
-        "runtime": "python3.11",
-        "maxLambdaSize": "15mb"
-      }
+      "src": "app/vercel.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
-      "src": "/webhook",
-      "dest": "app/main.py",
-      "methods": ["POST"]
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/app/static/$1"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "app/main.py"
-    },
-    {
       "src": "/(.*)",
-      "dest": "app/main.py"
+      "dest": "app/vercel.py"
     }
   ],
   "env": {
-    "PYTHON_VERSION": "3.11",
-    "PYTHONPATH": ".",
-    "DATABASE_URL": "postgresql://atributik:BpM3TIh2USFn0KBPj77qh9WerjTCqsad@dpg-cutmu00gph6c73b4gj20-a.oregon-postgres.render.com/drill_flow_db",
-    "TELEGRAM_TOKEN": "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs",
-    "BOT_WEBHOOK_DOMAIN": "https://drilling-flow.vercel.app",
-    "ENVIRONMENT": "production",
-    "DEBUG": "false"
+    "PYTHONPATH": "/var/task"
   }
 } 

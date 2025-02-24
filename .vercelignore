@@ -5,4 +5,10 @@ __pycache__/
 *.pyo
 *.pyd
 .env
-.venv 
+.venv
+.env.*
+venv
+.git
+.gitignore
+README.md
+tests 

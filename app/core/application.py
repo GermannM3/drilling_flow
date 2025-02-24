@@ -20,8 +20,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.PROJECT_NAME,
         version=settings.VERSION,
-        docs_url="/api/docs",
-        redoc_url="/api/redoc"
+        description="API для сервиса бурения скважин"
     )
 
     # Настройка CORS
@@ -34,7 +33,7 @@ def create_app() -> FastAPI:
     )
 
     # Подключаем роуты
-    app.include_router(auth.router, prefix="/api", tags=["auth"])
+    app.include_router(auth, prefix="/api", tags=["auth"])
     app.include_router(orders.router, prefix="/api", tags=["orders"])
     app.include_router(contractors.router, prefix="/api", tags=["contractors"])
     app.include_router(geo.router, prefix="/api", tags=["geo"])
