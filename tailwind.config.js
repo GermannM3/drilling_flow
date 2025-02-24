@@ -1,5 +1,8 @@
 module.exports = {
-    content: ["./app/routers/webapp.py", "./app/static/**/*.html"],
+    content: [
+        "./app/templates/**/*.html",
+        "./app/static/webapp/js/**/*.js"
+    ],
     important: '#webcrumbs',
     theme: {
         extend: {

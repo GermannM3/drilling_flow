@@ -39,6 +39,10 @@ class Order(Base):
     contractor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Связи
-    customer = relationship("User", foreign_keys=[customer_id], back_populates="customer_orders")
-    contractor = relationship("User", foreign_keys=[contractor_id], back_populates="contractor_orders")
-    ratings = relationship("OrderRating", back_populates="order") 
+    customer = relationship("app.db.models.user.User", foreign_keys=[customer_id], back_populates="customer_orders")
+    contractor = relationship("app.db.models.user.User", foreign_keys=[contractor_id], back_populates="contractor_orders")
+    ratings = relationship(
+        "app.db.models.rating.OrderRating", 
+        back_populates="order",
+        foreign_keys="[app.db.models.rating.OrderRating.order_id]"
+    ) 

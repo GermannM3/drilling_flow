@@ -210,3 +210,14 @@ Thumbs.db
 static/webapp/output.css
 app/static/webapp/output.css
 .vercel
+
+# Игнорируем сгенерированные файлы
+app/static/webapp/css/output.css
+app/static/webapp/css/output.css.map
+
+# Медиафайлы
+app/media/*
+!app/media/.gitkeep
+!app/media/*/
+app/media/*/*
+!app/media/*/.gitkeep

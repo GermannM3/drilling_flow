@@ -88,6 +88,17 @@ class Settings(BaseSettings):
     LOG_FORMAT: str = "json"
     LOG_PATH: str = "/app/logs"
 
+    # Медиафайлы
+    MEDIA_ROOT: str = "app/media"
+    MEDIA_URL: str = "/media"
+    MAX_UPLOAD_SIZE: int = 5_242_880  # 5MB в байтах
+    ALLOWED_MEDIA_TYPES: list[str] = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "application/pdf"
+    ]
+
     @property
     def allowed_hosts_list(self) -> List[str]:
         """Преобразует строку ALLOWED_HOSTS в список"""

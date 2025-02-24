@@ -33,6 +33,10 @@ def create_app() -> FastAPI:
     static_path = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
+    # Монтируем директорию для медиафайлов
+    media_path = Path(__file__).parent / "media"
+    app.mount("/media", StaticFiles(directory=str(media_path)), name="media")
+
     # Подключаем метрики Prometheus
     Instrumentator().instrument(app).expose(app)
 

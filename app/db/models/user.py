@@ -28,6 +28,18 @@ class User(Base):
     rating = Column(Float, default=0.0)
     
     # Связи
-    customer_orders = relationship("Order", foreign_keys="Order.customer_id", back_populates="customer")
-    contractor_orders = relationship("Order", foreign_keys="Order.contractor_id", back_populates="contractor")
-    contractor_ratings = relationship("OrderRating", back_populates="contractor") 
+    customer_orders = relationship(
+        "app.db.models.order.Order", 
+        foreign_keys="[app.db.models.order.Order.customer_id]", 
+        back_populates="customer"
+    )
+    contractor_orders = relationship(
+        "app.db.models.order.Order", 
+        foreign_keys="[app.db.models.order.Order.contractor_id]", 
+        back_populates="contractor"
+    )
+    contractor_ratings = relationship(
+        "app.db.models.rating.OrderRating", 
+        back_populates="contractor",
+        foreign_keys="[app.db.models.rating.OrderRating.contractor_id]"
+    ) 
