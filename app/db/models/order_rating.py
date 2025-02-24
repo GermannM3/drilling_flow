@@ -7,9 +7,9 @@ class OrderRating(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"))
-    contractor_id = Column(Integer, ForeignKey("contractors.id"))
+    contractor_id = Column(Integer, ForeignKey("users.id"))
     client_rating = Column(Float, nullable=True)
     contractor_rating = Column(Float, nullable=True)
     
     order = relationship("Order", back_populates="ratings")
-    contractor = relationship("Contractor", back_populates="ratings") 
+    contractor = relationship("User", back_populates="contractor_ratings") 

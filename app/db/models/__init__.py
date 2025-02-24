@@ -32,8 +32,9 @@ class User(Base):
     first_name = Column(String)
     role = Column(String, default=UserRole.CLIENT)
     rating = Column(Float, default=0.0)
-    orders = relationship("Order", back_populates="client")
-    contractor_orders = relationship("Order", back_populates="contractor")
+    orders = relationship("Order", back_populates="client", foreign_keys="Order.client_id")
+    contractor_orders = relationship("Order", back_populates="contractor", foreign_keys="Order.contractor_id")
+    contractor_ratings = relationship("OrderRating", back_populates="contractor")
 
 class Order(Base):
     __tablename__ = "orders"
@@ -51,6 +52,7 @@ class Order(Base):
     
     client = relationship("User", back_populates="orders", foreign_keys=[client_id])
     contractor = relationship("User", back_populates="contractor_orders", foreign_keys=[contractor_id])
+    ratings = relationship("OrderRating", back_populates="order")
 
 # Экспортируем модели
 __all__ = [
@@ -59,15 +61,8 @@ __all__ = [
     "ServiceType", 
     "UserRole", 
     "OrderStatus",
+    "OrderRating"
 ]
 
-# Добавляем импорт OrderRating если он существует
-try:
-    from .order_rating import OrderRating
-except ImportError:
-    OrderRating = None
-
-# Добавляем импорт OrderRating если он существует
-__all__ += [
-    "OrderRating"
-] 
+# Импортируем OrderRating в конце, после определения всех зависимостей
+from .order_rating import OrderRating 
