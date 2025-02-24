@@ -7,6 +7,9 @@ from app.db.models import (
     OrderStatus,
     OrderRating
 )
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from app.db.models.contractor import Contractor
 
 async def calculate_contractor_rating(user: User) -> float:
     """
@@ -42,4 +45,16 @@ async def update_rating_after_order(order: Order, rating_value: float, comment: 
     
     # Обновляем рейтинг подрядчика
     if order.contractor:
-        order.contractor.rating = await calculate_contractor_rating(order.contractor) 
+        order.contractor.rating = await calculate_contractor_rating(order.contractor)
+
+async def get_contractor_rating(
+    db: AsyncSession,
+    limit: int = 10
+) -> list[Contractor]:
+    """Получение рейтинга подрядчиков"""
+    query = select(Contractor).order_by(
+        Contractor.rating.desc()
+    ).limit(limit)
+    
+    result = await db.execute(query)
+    return result.scalars().all() 

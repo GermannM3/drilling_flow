@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "ElderCade"
-    DEBUG: bool = True
+    DEBUG: bool = False
     
     # Настройки сервера
     HOST: str = "0.0.0.0"
@@ -61,9 +61,14 @@ class Settings(BaseSettings):
     YANDEX_API_KEY: str = "your-yandex-api-key"
     TELEGRAM_TOKEN: str
     BOT_WEBHOOK_DOMAIN: str
+    BOT_WEBHOOK_URL: Optional[str] = None
+    BOT_ADMIN_GROUP_ID: Optional[int] = None
+    BOT_SUPPORT_GROUP_ID: Optional[int] = None
 
     # CORS
     ORIGINS: List[str] = ["*"]
+    ALLOWED_HOSTS: list[str] = ["*"]
+    CORS_ORIGINS: list[str] = ["*"]
 
     # Тестирование
     TESTING: bool = False

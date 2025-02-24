@@ -38,12 +38,10 @@ dp.bot = bot
 async def setup_bot_commands():
     """Установка команд бота"""
     commands = [
-        BotCommand(command="start", description="Начать работу с ботом"),
+        BotCommand(command="start", description="Начать работу"),
         BotCommand(command="help", description="Помощь"),
-        BotCommand(command="register", description="Регистрация"),
-        BotCommand(command="profile", description="Мой профиль"),
         BotCommand(command="orders", description="Мои заказы"),
-        BotCommand(command="new_order", description="Создать заказ"),
+        BotCommand(command="profile", description="Мой профиль")
     ]
     await bot.set_my_commands(commands)
 
@@ -153,6 +151,8 @@ __all__ = ["bot", "dp", "router"]
 
 # Команды бота будут установлены при запуске приложения
 
-async def set_webhook():
-    webhook_url = f"{settings.BOT_WEBHOOK_DOMAIN}/webhook"
-    await bot.set_webhook(webhook_url) 
+async def setup_webhook():
+    """Настройка вебхука"""
+    if settings.BOT_WEBHOOK_URL:
+        await bot.set_webhook(settings.BOT_WEBHOOK_URL)
+        print(f"Webhook set to {settings.BOT_WEBHOOK_URL}") 

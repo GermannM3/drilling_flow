@@ -5,6 +5,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
+from app.core.config import settings
 
 def get_database_url() -> str:
     """Получение URL базы данных в зависимости от окружения"""
@@ -37,14 +38,24 @@ if "sqlite" in DATABASE_URL:
         finally:
             db.close()
 else:
-    engine = create_async_engine(DATABASE_URL)
-    SessionLocal = sessionmaker(
+    # Создаем асинхронный движок
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=settings.DEBUG,
+        future=True
+    )
+
+    # Создаем фабрику асинхронных сессий
+    async_session = sessionmaker(
         engine,
         class_=AsyncSession,
         expire_on_commit=False
     )
 
+    # Функция для получения сессии БД
     async def get_db():
-        """Получение асинхронной сессии БД для PostgreSQL"""
-        async with SessionLocal() as session:
-            yield session 
+        async with async_session() as session:
+            try:
+                yield session
+            finally:
+                await session.close() 

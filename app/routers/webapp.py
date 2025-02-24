@@ -13,6 +13,8 @@ from app.services.auth import get_current_user
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from ..core.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.rating import get_contractor_rating
 
 router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
@@ -44,13 +46,20 @@ def check_telegram_auth(auth_data):
     return hash_string == check_hash
 
 @router.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    """
-    Главная страница веб-приложения
-    """
+async def index(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """Главная страница"""
+    # Получаем топ подрядчиков по рейтингу
+    top_contractors = await get_contractor_rating(db, limit=5)
+    
     return templates.TemplateResponse(
         "index.html",
-        {"request": request}
+        {
+            "request": request,
+            "contractors": top_contractors
+        }
     )
 
 @router.post("/auth/telegram")
