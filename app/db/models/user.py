@@ -40,6 +40,5 @@ class User(Base):
     )
     contractor_ratings = relationship(
         "app.db.models.rating.OrderRating", 
-        back_populates="contractor",
-        foreign_keys="[app.db.models.rating.OrderRating.contractor_id]"
+        back_populates="contractor"
     ) 
