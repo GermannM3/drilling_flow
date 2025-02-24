@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "ElderCade"
+    DEBUG: bool = True
     
     # Настройки сервера
     HOST: str = "0.0.0.0"
@@ -26,7 +27,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "drillflow"
-    DATABASE_URL: Optional[str] = None
+    DATABASE_URL: str
     POSTGRES_POOL_SIZE: int = 20
     POSTGRES_MAX_OVERFLOW: int = 30
     POSTGRES_POOL_TIMEOUT: int = 30
@@ -34,7 +35,7 @@ class Settings(BaseSettings):
     # Redis
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
-    REDIS_URL: str = "redis://redis:6379/0"
+    REDIS_URL: str
     REDIS_MAX_CONNECTIONS: int = 100
     REDIS_SOCKET_TIMEOUT: int = 5
     REDIS_SOCKET_CONNECT_TIMEOUT: int = 5
@@ -44,7 +45,7 @@ class Settings(BaseSettings):
     CACHE_PREFIX: str = "drillflow"
 
     # JWT
-    JWT_SECRET_KEY: str = "ElderCade"
+    JWT_SECRET_KEY: str = "secret"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
@@ -58,7 +59,8 @@ class Settings(BaseSettings):
 
     # API Keys
     YANDEX_API_KEY: str = "your-yandex-api-key"
-    TELEGRAM_TOKEN: str = "test_token"  # Для тестов
+    TELEGRAM_TOKEN: str
+    BOT_WEBHOOK_DOMAIN: str
 
     # CORS
     ORIGINS: List[str] = ["*"]
@@ -91,4 +93,6 @@ def get_settings() -> Settings:
     Returns:
         Settings: Объект с настройками
     """
-    return Settings() 
+    return Settings()
+
+settings = get_settings() 

@@ -9,12 +9,21 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from app.core.init_db import init_db
 from .core.bot import setup_bot_commands
 import asyncio
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 # Инициализируем БД при старте
 init_db()
 
 # Создаем приложение
 app = create_app()
+
+# Монтируем статические файлы
+app.mount(
+    "/static",
+    StaticFiles(directory=str(Path(__file__).parent / "static")),
+    name="static"
+)
 
 # Добавляем метрики Prometheus
 Instrumentator().instrument(app).expose(app)
@@ -25,7 +34,7 @@ app.include_router(auth)
 app.include_router(orders)
 app.include_router(contractors)
 app.include_router(geo)
-app.include_router(webapp)
+app.include_router(webapp.router)
 
 @app.get("/")
 async def root():

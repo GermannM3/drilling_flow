@@ -16,7 +16,7 @@ WORKDIR /app
 
 # Копирование и установка зависимостей
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Копирование кода
 COPY . .
@@ -27,7 +27,8 @@ USER appuser
 
 # Настройки безопасности
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app
 
 # Запуск бота
-CMD ["python", "app/bot/main.py"] 
+CMD ["python", "-m", "app.bot.main"] 

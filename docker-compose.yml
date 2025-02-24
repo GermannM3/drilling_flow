@@ -8,6 +8,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/drillflow
       - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
     volumes:
       - .:/app
       - static_volume:/app/static
@@ -43,6 +44,8 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      - PYTHONPATH=/app
     depends_on:
       - app
       - redis
@@ -57,6 +60,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/drillflow
       - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
     depends_on:
       - redis
       - db
