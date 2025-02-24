@@ -155,14 +155,14 @@ async def get_active_orders(db: Session = Depends(get_db)):
 
 @router.get("/webapp", response_class=HTMLResponse)
 async def webapp(request: Request):
-    """Рендеринг веб-приложения"""
-    try:
-        return templates.TemplateResponse(
-            "webapp.html",
-            {"request": request}
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    """Веб-приложение для Telegram"""
+    return templates.TemplateResponse(
+        "webapp.html",
+        {
+            "request": request,
+            "page": "webapp"
+        }
+    )
 
 @router.get("/api/orders")
 async def get_orders():

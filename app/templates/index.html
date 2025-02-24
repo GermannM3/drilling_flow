@@ -1,14 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DrillFlow Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
-  </head>
-  <body>
-    <div id="webcrumbs"><div class="min-h-screen bg-gradient-to-br from-emerald-800 to-blue-900 flex items-center justify-center p-4 sm:p-8"> <div class="w-full max-w-[1200px] bg-slate-900 rounded-xl shadow-2xl p-4 sm:p-8 border-2 sm:border-4 border-emerald-500"> <header class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4"> <div class="flex items-center gap-4"> <span class="material-symbols-outlined text-3xl sm:text-4xl text-emerald-400">water_drop</span> <h1 class="text-2xl sm:text-3xl font-bold text-emerald-400">Панель Управления DrillFlow</h1> </div> <div class="flex items-center gap-4"> <details class="relative"> <summary class="flex items-center gap-2 cursor-pointer hover:bg-emerald-800 p-2 rounded-lg transition-all"> <span class="material-symbols-outlined text-emerald-400">notifications</span> <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span> </summary> <div class="absolute right-0 mt-2 w-64 bg-slate-800 rounded-lg shadow-2xl p-4 z-10 border-2 border-emerald-500"> <div class="flex flex-col gap-2"> <div class="p-2 hover:bg-slate-700 rounded-lg transition-all text-emerald-400"> <p class="font-semibold">Новый Заказ #1234</p> <p class="text-sm text-emerald-300">Запрос на бурение скважины - 5км</p> </div> </div> </div> </details> <details class="relative"> <summary class="flex items-center gap-2 cursor-pointer hover:bg-emerald-800 p-2 rounded-lg transition-all text-emerald-400"> <span class="material-symbols-outlined">account_circle</span> <span>Администратор</span> </summary> </details> </div> </header> <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8"> <div class="bg-emerald-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500"> <div class="flex items-center gap-4"> <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">engineering</span> <div class="text-emerald-400"> <p class="text-xl sm:text-2xl font-bold">247</p> <p class="text-sm sm:text-base">Активных Подрядчиков</p> </div> </div> </div> <div class="bg-blue-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500"> <div class="flex items-center gap-4"> <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">assignment</span> <div class="text-emerald-400"> <p class="text-xl sm:text-2xl font-bold">1,893</p> <p class="text-sm sm:text-base">Выполненных Заказов</p> </div> </div> </div> <div class="bg-emerald-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500"> <div class="flex items-center gap-4"> <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">pending</span> <div class="text-emerald-400"> <p class="text-xl sm:text-2xl font-bold">42</p> <p class="text-sm sm:text-base">Ожидающих Заказов</p> </div> </div> </div> <div class="bg-blue-900 p-4 sm:p-6 rounded-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-emerald-500"> <div class="flex items-center gap-4"> <span class="material-symbols-outlined text-2xl sm:text-3xl text-emerald-400">stars</span> <div class="text-emerald-400"> <p class="text-xl sm:text-2xl font-bold">4.8</p> <p class="text-sm sm:text-base">Средний Рейтинг</p> </div> </div> </div> </div> <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6"> <div class="lg:col-span-2 bg-slate-800 rounded-xl border-2 sm:border-4 border-emerald-500 p-4 sm:p-6"> <h2 class="text-lg sm:text-xl font-bold mb-4 text-emerald-400">Последние Заказы</h2> <div class="space-y-4"> <div class="flex items-center justify-between p-2 sm:p-4 hover:bg-slate-700 rounded-lg transition-all"> <div class="flex items-center gap-4"> <span class="material-symbols-outlined text-emerald-400">drill</span> <div class="text-emerald-400"> <p class="font-semibold">Бурение Скважины</p> <p class="text-xs sm:text-sm text-emerald-300">ул. Главная 123, Город</p> </div> </div> <button class="bg-emerald-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-emerald-700 transition-all transform hover:scale-105 border-2 border-emerald-400 text-sm sm:text-base"> Назначить </button> </div> </div> </div> <div class="bg-slate-800 rounded-xl border-2 sm:border-4 border-emerald-500 p-4 sm:p-6"> <h2 class="text-lg sm:text-xl font-bold mb-4 text-emerald-400">Лучшие Подрядчики</h2> <div class="space-y-4"> <div class="flex items-center justify-between p-2 hover:bg-slate-700 rounded-lg transition-all"> <div class="flex items-center gap-2"> <span class="material-symbols-outlined text-emerald-400">account_circle</span> <p class="font-semibold text-emerald-400 text-sm sm:text-base">Иван Иванов</p> </div> <div class="flex items-center text-emerald-400"> <span class="material-symbols-outlined text-yellow-500">star</span> <span class="text-sm sm:text-base">4.9</span> </div> </div> </div> </div> </div> </div> </div></div>
+{% extends "base.html" %}
 
+{% block title %}Главная{% endblock %}
 
-  </body>
-</html>
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-emerald-800 to-blue-900 flex justify-center items-center">
+    <div class="max-w-[1200px] w-full p-4">
+        <div class="text-white text-center mb-8">
+            <h1 class="text-3xl font-bold mb-4">DrillFlow</h1>
+            <p class="text-lg">Сервис для заказа бурения скважин</p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Карточки с информацией -->
+        </div>
+    </div>
+</div>
+{% endblock %}

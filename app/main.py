@@ -11,27 +11,45 @@ from .core.bot import setup_bot_commands
 import asyncio
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import get_settings
 
-# Создаем приложение
+settings = get_settings()
+
+def create_app() -> FastAPI:
+    """Создание и настройка приложения"""
+    app = FastAPI(
+        title=settings.PROJECT_NAME,
+        version=settings.VERSION
+    )
+
+    # Настройка CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Монтируем статические файлы
+    static_path = Path(__file__).parent / "static"
+    app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+
+    # Добавляем метрики Prometheus
+    Instrumentator().instrument(app).expose(app)
+
+    # Подключение роутеров
+    app.include_router(health_router)
+    app.include_router(auth)
+    app.include_router(orders)
+    app.include_router(contractors)
+    app.include_router(geo)
+    app.include_router(webapp.router)
+
+    return app
+
 app = create_app()
-
-# Монтируем статические файлы
-app.mount(
-    "/static",
-    StaticFiles(directory=str(Path(__file__).parent / "static")),
-    name="static"
-)
-
-# Добавляем метрики Prometheus
-Instrumentator().instrument(app).expose(app)
-
-# Подключение роутеров
-app.include_router(health_router)
-app.include_router(auth)
-app.include_router(orders)
-app.include_router(contractors)
-app.include_router(geo)
-app.include_router(webapp.router)
 
 @app.get("/")
 async def root():
