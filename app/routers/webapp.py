@@ -142,4 +142,16 @@ async def get_active_orders(db: Session = Depends(get_db)):
         "id": order.id,
         "title": order.description,
         "location": order.address
-    } for order in active_orders]) 
+    } for order in active_orders])
+
+@router.get("/webapp", response_class=HTMLResponse)
+async def webapp(request: Request):
+    return templates.TemplateResponse(
+        "webapp.html",
+        {"request": request}
+    )
+
+@router.get("/api/orders")
+async def get_orders():
+    # API для получения заказов
+    return {"orders": []} 
