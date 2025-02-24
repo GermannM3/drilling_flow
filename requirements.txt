@@ -16,10 +16,6 @@ openpyxl==3.1.5
 python-multipart==0.0.20
 aiosqlite==0.17.0
 sqlalchemy-utils==0.41.1
-pytest==8.3.4
-pytest-asyncio==0.25.3
-pytest-cov==6.0.0
-httpx==0.28.1
 
 # Убираем явное указание starlette, так как она является зависимостью FastAPI
 # starlette==0.27.0 
@@ -27,31 +23,7 @@ httpx==0.28.1
 # Database - оптимизированные версии
 asyncpg==0.29.0  # Асинхронный драйвер PostgreSQL
 
-# Cache & Queue - с оптимизациями
-redis[hiredis]==5.2.1  # hiredis для быстрого парсинга
-celery[redis]==5.4.0
-fastapi-cache2==0.2.2
-
-# Security
-slowapi==0.1.9
-certifi==2025.1.31
-
-# Monitoring
-prometheus-client==0.21.1
-sentry-sdk==2.22.0
-prometheus-fastapi-instrumentator==5.11.2
-
-# Logging
-loguru==0.7.3
-
-# Testing
-pytest-env==1.1.3
-pytest-mock==3.14.0
-
 # Telegram
 python-telegram-bot==13.7
-
-# Utilities
-tenacity==9.0.0
 
 # Added from the code block
