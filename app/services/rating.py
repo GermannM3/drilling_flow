@@ -1,15 +1,9 @@
 """
 Сервис управления рейтингами
 """
-from app.db.models import (
-    User,
-    Order,
-    OrderStatus,
-    OrderRating
-)
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from app.db.models.contractor import Contractor
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.models import User, Order, OrderStatus, OrderRating
 
 async def calculate_contractor_rating(user: User) -> float:
     """
@@ -22,26 +16,30 @@ async def calculate_contractor_rating(user: User) -> float:
         float: Обновленный рейтинг
     """
     completed_orders = [
-        order for order in user.orders 
-        if order.status == OrderStatus.COMPLETED and order.rating
+        order for order in user.contractor_orders 
+        if order.status == OrderStatus.COMPLETED and order.ratings
     ]
     
     if not completed_orders:
         return 0.0
         
-    total_rating = sum(order.rating for order in completed_orders)
+    total_rating = sum(order.ratings[0].rating for order in completed_orders)
     return total_rating / len(completed_orders)
 
-async def update_rating_after_order(order: Order, rating_value: float, comment: str = None) -> None:
+async def update_rating_after_order(order: Order, rating_value: float) -> None:
     """
     Обновляет рейтинг после выполнения заказа
     
     Args:
         order: Заказ
         rating_value: Оценка от 1 до 5
-        comment: Комментарий к оценке
     """
-    order.rating = rating_value
+    # Создаем новый рейтинг
+    rating = OrderRating(
+        order=order,
+        contractor=order.contractor,
+        rating=rating_value
+    )
     
     # Обновляем рейтинг подрядчика
     if order.contractor:

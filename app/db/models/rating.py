@@ -18,5 +18,5 @@ class OrderRating(Base):
     rating = Column(Float)
     
     # Связи
-    order = relationship("Order", back_populates="rating")
+    order = relationship("Order", back_populates="order_ratings")
     contractor = relationship("User", back_populates="contractor_ratings") 

@@ -41,4 +41,4 @@ class Order(Base):
     # Связи
     customer = relationship("User", foreign_keys=[customer_id], back_populates="customer_orders")
     contractor = relationship("User", foreign_keys=[contractor_id], back_populates="contractor_orders")
-    rating = relationship("OrderRating", back_populates="order", uselist=False) 
+    ratings = relationship("OrderRating", back_populates="order") 
