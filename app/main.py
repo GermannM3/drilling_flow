@@ -7,6 +7,8 @@ from .core.health_check import router as health_router
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
 from app.core.init_db import init_db
+from .core.bot import setup_bot_commands
+import asyncio
 
 # Инициализируем БД при старте
 init_db()
@@ -36,4 +38,14 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Проверка здоровья сервиса"""
-    return {"status": "ok"} 
+    return {"status": "ok"}
+
+@app.on_event("startup")
+async def startup_event():
+    """Действия при запуске приложения"""
+    # Устанавливаем команды бота
+    await setup_bot_commands()
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True) 

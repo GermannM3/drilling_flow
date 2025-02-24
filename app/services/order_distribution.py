@@ -3,7 +3,7 @@
 """
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
-from app.db.models import Order, Contractor, User
+from app.db.models import Order, User, UserRole
 from .geo import calculate_distance
 from app.core.config import get_settings
 
@@ -15,8 +15,8 @@ async def distribute_order(db: Session, order_id: int) -> bool:
             return False
         
         # Находим доступных подрядчиков
-        available_contractors = db.query(Contractor).filter(
-            Contractor.is_available == True
+        available_contractors = db.query(User).filter(
+            User.role == UserRole.CONTRACTOR
         ).all()
         
         if not available_contractors:
@@ -30,7 +30,7 @@ async def distribute_order(db: Session, order_id: int) -> bool:
         print(f"Error distributing order: {e}")
         return False
 
-async def distribute_order_old(order: Order, contractors: List[Contractor]) -> Optional[Contractor]:
+async def distribute_order_old(order: Order, contractors: List[User]) -> Optional[User]:
     """
     Распределяет заказ между подрядчиками
     
@@ -39,24 +39,24 @@ async def distribute_order_old(order: Order, contractors: List[Contractor]) -> O
         contractors: Список доступных подрядчиков
     
     Returns:
-        Contractor: Выбранный подрядчик или None
+        User: Выбранный подрядчик или None
     """
-    suitable_contractors: List[Tuple[Contractor, float]] = []
+    suitable_contractors: List[Tuple[User, float]] = []
     
     for contractor in contractors:
-        if not contractor.user:
+        if contractor.role != UserRole.CONTRACTOR:
             continue
             
         # Проверяем загрузку подрядчика
-        if contractor.user.current_orders >= contractor.user.max_orders_per_day:
+        if len(contractor.contractor_orders) >= 5:  # Максимум 5 заказов в день
             continue
             
         # Проверяем радиус работы
         distance = calculate_distance(
             (order.latitude, order.longitude),
-            (contractor.latitude, contractor.longitude)
+            (contractor.location_lat, contractor.location_lon)  # Нужно добавить эти поля в User
         )
-        if distance > contractor.user.work_radius:
+        if distance > 50:  # Максимальный радиус 50 км
             continue
             
         # Добавляем подходящего подрядчика
@@ -68,7 +68,7 @@ async def distribute_order_old(order: Order, contractors: List[Contractor]) -> O
     # Сортируем по рейтингу и расстоянию
     sorted_contractors = sorted(
         suitable_contractors,
-        key=lambda x: (x[0].user.rating, -x[1]),  # Высокий рейтинг и малое расстояние
+        key=lambda x: (x[0].rating, -x[1]),  # Высокий рейтинг и малое расстояние
         reverse=True
     )
     

@@ -1,49 +1,40 @@
 version: '3.8'
 
 services:
-  web:
+  app:
     build: .
     ports:
-      - "8080:8080"
+      - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://atributik:BpM3TIh2USFn0KBPj77qh9WerjTCqsad@dpg-cutmu00gph6c73b4gj20-a.oregon-postgres.render.com/drill_flow_db
-      - TELEGRAM_TOKEN=7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs
-      - BOT_WEBHOOK_DOMAIN=https://drilling-flow.vercel.app
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/drillflow
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
     depends_on:
       - db
+      - redis
+    networks:
+      - app_network
 
   db:
     image: postgres:15
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=drill_flow_db
+      - POSTGRES_DB=drillflow
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+    networks:
+      - app_network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
     volumes:
       - redis_data:/data
-    restart: always
-    command: >
-      --maxmemory 512mb
-      --maxmemory-policy allkeys-lru
-      --save 900 1
-      --save 300 10
-      --save 60 10000
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
     networks:
-      - backend
+      - app_network
 
   bot:
     build:
@@ -53,61 +44,52 @@ volumes:
     env_file:
       - .env
     depends_on:
-      - web
+      - app
       - redis
     networks:
-      - backend
+      - app_network
 
   celery:
     build: .
-    command: celery -A app.worker worker --loglevel=info --concurrency=4
+    command: celery -A app.worker worker --loglevel=info
     volumes:
-      - ./app:/app/app
-    env_file:
-      - .env
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/drillflow
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - redis
       - db
-    restart: always
     networks:
-      - backend
+      - app_network
 
   prometheus:
     image: prom/prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
       - "9090:9090"
-    restart: always
     networks:
-      - backend
+      - app_network
 
   grafana:
     image: grafana/grafana
-    depends_on:
-      - prometheus
     ports:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-    restart: always
     networks:
-      - backend
+      - app_network
 
 networks:
-  backend:
+  app_network:
     driver: bridge
 
 volumes:
+  postgres_data:
   redis_data:
   prometheus_data:
   grafana_data:

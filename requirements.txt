@@ -4,7 +4,7 @@ uvicorn==0.27.1
 python-dotenv==0.21.1
 sqlalchemy==2.0.25
 alembic==1.14.1
-psycopg2-binary==2.9.9
+asyncpg==0.29.0
 aiogram==3.18.0
 aiohttp==3.9.3
 python-jose==3.3.0
@@ -15,6 +15,7 @@ pydantic-settings==2.0.3
 python-multipart==0.0.20
 aiosqlite==0.17.0
 sqlalchemy-utils==0.41.1
+celery[redis]==5.3.6
 
 # Убираем явное указание starlette, так как она является зависимостью FastAPI
 # starlette==0.27.0 
@@ -26,3 +27,4 @@ asyncpg==0.29.0  # Асинхронный драйвер PostgreSQL
 python-telegram-bot==13.7
 
 # Added from the code block
+jinja2==3.1.2

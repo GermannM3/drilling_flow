@@ -8,7 +8,10 @@ from aiogram.types import (
     Message, BotCommand
 )
 from aiogram.filters import Command
+from aiogram.enums.parse_mode import ParseMode
+from aiogram.client.default import DefaultBotProperties
 from ..core.config import get_settings
+import asyncio
 
 settings = get_settings()
 
@@ -17,7 +20,10 @@ router = Router()
 
 # Создаем бота только если не в режиме тестирования
 if not settings.TESTING:
-    bot = Bot(token=settings.TELEGRAM_TOKEN)
+    bot = Bot(
+        token=settings.TELEGRAM_TOKEN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    )
     dp = Dispatcher()
 else:
     from unittest.mock import AsyncMock, MagicMock
@@ -32,7 +38,7 @@ dp.bot = bot
 async def setup_bot_commands():
     """Установка команд бота"""
     commands = [
-        BotCommand(command="start", description="Запустить бота"),
+        BotCommand(command="start", description="Начать работу с ботом"),
         BotCommand(command="help", description="Помощь"),
         BotCommand(command="register", description="Регистрация"),
         BotCommand(command="profile", description="Мой профиль"),
@@ -145,10 +151,7 @@ dp.include_router(router)
 # Экспортируем для использования в других модулях
 __all__ = ["bot", "dp", "router"]
 
-# Устанавливаем команды при запуске
-if not settings.TESTING:
-    import asyncio
-    asyncio.create_task(setup_bot_commands())
+# Команды бота будут установлены при запуске приложения
 
 async def set_webhook():
     webhook_url = f"{settings.BOT_WEBHOOK_DOMAIN}/webhook"

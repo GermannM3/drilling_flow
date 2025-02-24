@@ -32,6 +32,8 @@ class User(Base):
     first_name = Column(String)
     role = Column(String, default=UserRole.CLIENT)
     rating = Column(Float, default=0.0)
+    location_lat = Column(Float, nullable=True)
+    location_lon = Column(Float, nullable=True)
     orders = relationship("Order", back_populates="client", foreign_keys="Order.client_id")
     contractor_orders = relationship("Order", back_populates="contractor", foreign_keys="Order.contractor_id")
     contractor_ratings = relationship("OrderRating", back_populates="contractor")

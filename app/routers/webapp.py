@@ -19,15 +19,15 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # Определяем пути к статическим файлам
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static" / "webapp"
-STATIC_DIR.mkdir(parents=True, exist_ok=True)
+TEMPLATES_DIR = BASE_DIR / "templates"
 
 # Монтируем статические файлы
 router.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-# Путь к директории с шаблонами
-templates = Jinja2Templates(directory="app/templates")
+# Инициализируем шаблоны
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 def check_telegram_auth(auth_data):
     """Проверка данных авторизации от Telegram"""
@@ -146,12 +146,25 @@ async def get_active_orders(db: Session = Depends(get_db)):
 
 @router.get("/webapp", response_class=HTMLResponse)
 async def webapp(request: Request):
-    return templates.TemplateResponse(
-        "webapp.html",
-        {"request": request}
-    )
+    """Рендеринг веб-приложения"""
+    try:
+        return templates.TemplateResponse(
+            "webapp.html",
+            {"request": request}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/api/orders")
 async def get_orders():
-    # API для получения заказов
-    return {"orders": []} 
+    """API для получения заказов"""
+    try:
+        # Заглушка для тестирования
+        return {
+            "orders": [
+                {"title": "Тестовый заказ 1", "location": "Москва"},
+                {"title": "Тестовый заказ 2", "location": "Санкт-Петербург"}
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 
