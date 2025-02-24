@@ -59,8 +59,15 @@ __all__ = [
     "ServiceType", 
     "UserRole", 
     "OrderStatus",
-    "OrderRating"
 ]
 
 # Добавляем импорт OrderRating если он существует
-from .order_rating import OrderRating 
+try:
+    from .order_rating import OrderRating
+except ImportError:
+    OrderRating = None
+
+# Добавляем импорт OrderRating если он существует
+__all__ += [
+    "OrderRating"
+] 
