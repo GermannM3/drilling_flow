@@ -4,7 +4,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
-from ..base import Base
+from app.db.base import Base
 import enum
 
 class ServiceType(enum.Enum):
@@ -12,7 +12,8 @@ class ServiceType(enum.Enum):
     SEWAGE = "sewage"
     REPAIR = "repair"
 
-class OrderStatus(enum.Enum):
+class OrderStatus(str, enum.Enum):
+    """Статусы заказа"""
     NEW = "new"
     ASSIGNED = "assigned"
     IN_PROGRESS = "in_progress"
@@ -20,30 +21,24 @@ class OrderStatus(enum.Enum):
     CANCELLED = "cancelled"
 
 class Order(Base):
-    """Модель заказа на бурение"""
+    """Модель заказа"""
     __tablename__ = "orders"
+    __table_args__ = {"extend_existing": True}
 
     id = Column(Integer, primary_key=True, index=True)
-    client_id = Column(Integer, ForeignKey("users.id"))
-    contractor_id = Column(Integer, ForeignKey("contractors.id"), nullable=True)
-    
-    service_type = Column(Enum(ServiceType))
-    status = Column(Enum(OrderStatus), default=OrderStatus.NEW)
-    address = Column(String, nullable=False)
-    latitude = Column(Float, nullable=False)
-    longitude = Column(Float, nullable=False)
+    title = Column(String, index=True)
     description = Column(String)
-    photo_url = Column(String, nullable=True)
-    
-    price = Column(Float, nullable=True)
-    prepayment = Column(Float, nullable=True)
-    payment_status = Column(String, default="pending")
-    
+    location = Column(String)
+    price = Column(Float)
+    status = Column(Enum(OrderStatus), default=OrderStatus.NEW)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    completed_at = Column(DateTime, nullable=True)
-
-    # Отношения
-    client = relationship("User", back_populates="client_orders")
-    contractor = relationship("Contractor", back_populates="contractor_orders")
+    
+    # Внешние ключи
+    customer_id = Column(Integer, ForeignKey("users.id"))
+    contractor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Связи
+    customer = relationship("User", foreign_keys=[customer_id], back_populates="customer_orders")
+    contractor = relationship("User", foreign_keys=[contractor_id], back_populates="contractor_orders")
     rating = relationship("OrderRating", back_populates="order", uselist=False) 

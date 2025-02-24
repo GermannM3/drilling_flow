@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     POSTGRES_MAX_OVERFLOW: int = 30
     POSTGRES_POOL_TIMEOUT: int = 30
     
+    @property
+    def get_database_url(self) -> str:
+        """Получение URL базы данных"""
+        if self.TESTING:
+            return "sqlite+aiosqlite:///./test.db"
+        return self.DATABASE_URL
+    
     # Redis
     REDIS_URL: str
     REDIS_HOST: str = "redis"

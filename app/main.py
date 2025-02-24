@@ -1,18 +1,15 @@
 """
-Точка входа в приложение
+Точка входа FastAPI приложения
 """
-from .core.application import create_app
-from .routers import orders, contractors, auth, geo, webapp
-from .core.health_check import router as health_router
 from fastapi import FastAPI
-from prometheus_fastapi_instrumentator import Instrumentator
-from app.core.init_db import init_db
-from .core.bot import setup_bot_commands
-import asyncio
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
+from prometheus_fastapi_instrumentator import Instrumentator
 from app.core.config import get_settings
+from app.routers import router as api_router
+from app.core.init_db import init_db
+from app.core.bot import setup_bot_commands
 
 settings = get_settings()
 
@@ -26,7 +23,7 @@ def create_app() -> FastAPI:
     # Настройка CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=settings.cors_origins_list,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -36,16 +33,24 @@ def create_app() -> FastAPI:
     static_path = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
-    # Добавляем метрики Prometheus
+    # Подключаем метрики Prometheus
     Instrumentator().instrument(app).expose(app)
 
-    # Подключение роутеров
-    app.include_router(health_router)
-    app.include_router(auth)
-    app.include_router(orders)
-    app.include_router(contractors)
-    app.include_router(geo)
-    app.include_router(webapp.router)
+    # Подключаем роутеры
+    app.include_router(api_router)
+
+    @app.on_event("startup")
+    async def startup_event():
+        """Действия при запуске приложения"""
+        # Инициализируем БД
+        await init_db()
+        # Устанавливаем команды бота
+        await setup_bot_commands()
+
+    @app.get("/health")
+    async def health_check():
+        """Проверка здоровья сервиса"""
+        return {"status": "ok"}
 
     return app
 
@@ -58,19 +63,6 @@ async def root():
         "version": settings.VERSION,
         "environment": "testing" if settings.TESTING else "production"
     }
-
-@app.get("/health")
-async def health_check():
-    """Проверка здоровья сервиса"""
-    return {"status": "ok"}
-
-@app.on_event("startup")
-async def startup_event():
-    """Действия при запуске приложения"""
-    # Инициализируем БД
-    await init_db()
-    # Устанавливаем команды бота
-    await setup_bot_commands()
 
 if __name__ == "__main__":
     import uvicorn

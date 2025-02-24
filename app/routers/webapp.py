@@ -1,3 +1,6 @@
+"""
+Роутер для веб-интерфейса
+"""
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 import logging

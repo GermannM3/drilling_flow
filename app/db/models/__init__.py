@@ -68,3 +68,18 @@ __all__ = [
 
 # Импортируем OrderRating в конце, после определения всех зависимостей
 from .order_rating import OrderRating 
+
+"""
+Импорты моделей
+"""
+from .user import User
+from .order import Order
+from .rating import OrderRating
+from .contractor import Contractor
+
+__all__ = [
+    "User",
+    "Order",
+    "OrderRating",
+    "Contractor"
+] 

@@ -50,11 +50,14 @@ async def update_rating_after_order(order: Order, rating_value: float, comment: 
 async def get_contractor_rating(
     db: AsyncSession,
     limit: int = 10
-) -> list[Contractor]:
+) -> list[User]:
     """Получение рейтинга подрядчиков"""
-    query = select(Contractor).order_by(
-        Contractor.rating.desc()
-    ).limit(limit)
+    query = (
+        select(User)
+        .filter(User.is_contractor == True)
+        .order_by(User.rating.desc())
+        .limit(limit)
+    )
     
     result = await db.execute(query)
     return result.scalars().all() 
