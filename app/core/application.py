@@ -34,8 +34,8 @@ def create_app() -> FastAPI:
 
     # Подключаем роуты
     app.include_router(auth, prefix="/api", tags=["auth"])
-    app.include_router(orders.router, prefix="/api", tags=["orders"])
-    app.include_router(contractors.router, prefix="/api", tags=["contractors"])
+    app.include_router(orders, prefix="/api", tags=["orders"])
+    app.include_router(contractors, prefix="/api", tags=["contractors"])
     app.include_router(geo.router, prefix="/api", tags=["geo"])
     app.include_router(webapp.router, tags=["webapp"])
 
