@@ -12,9 +12,6 @@ import asyncio
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-# Инициализируем БД при старте
-init_db()
-
 # Создаем приложение
 app = create_app()
 
@@ -52,6 +49,8 @@ async def health_check():
 @app.on_event("startup")
 async def startup_event():
     """Действия при запуске приложения"""
+    # Инициализируем БД
+    await init_db()
     # Устанавливаем команды бота
     await setup_bot_commands()
 

@@ -1,5 +1,7 @@
-from app.core.database import Base, engine
+from app.db.base import Base
+from app.core.database import engine
 
-def init_db():
+async def init_db():
     """Инициализация базы данных"""
-    Base.metadata.create_all(bind=engine) 
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all) 
