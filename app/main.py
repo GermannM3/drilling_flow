@@ -6,10 +6,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from prometheus_fastapi_instrumentator import Instrumentator
+from sqlalchemy.orm import configure_mappers
+
 from app.core.config import get_settings
 from app.routers import router as api_router
 from app.core.init_db import init_db
 from app.core.bot import setup_bot_commands
+from app.db.models import User, Order, OrderRating  # Явно импортируем модели
 
 settings = get_settings()
 
@@ -46,9 +49,7 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         """Действия при запуске приложения"""
-        # Инициализируем БД
         await init_db()
-        # Устанавливаем команды бота
         await setup_bot_commands()
 
     @app.get("/health")
@@ -57,6 +58,9 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     return app
+
+# Настраиваем маппинги SQLAlchemy
+configure_mappers()
 
 app = create_app()
 

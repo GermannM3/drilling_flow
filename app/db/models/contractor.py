@@ -3,7 +3,7 @@
 """
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
-from app.core.database import Base
+from app.db.base import Base
 
 class Contractor(Base):
     """Модель подрядчика"""
@@ -16,5 +16,12 @@ class Contractor(Base):
     orders_completed = Column(Integer, default=0)
     location = Column(String, nullable=True)
 
-    # Определяем отношения без обратных ссылок
-    contractor_orders = relationship("Order", back_populates="contractor", foreign_keys="Order.contractor_id") 
+# Импортируем после определения класса
+from app.db.models.user import User
+
+# Добавляем отношения после импорта
+Contractor.user = relationship(
+    User, 
+    foreign_keys=[Contractor.user_id],
+    backref="contractor_profile"
+) 

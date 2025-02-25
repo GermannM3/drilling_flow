@@ -4,6 +4,7 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import User, Order, OrderStatus, OrderRating
+from .rating import OrderRating
 
 async def calculate_contractor_rating(user: User) -> float:
     """

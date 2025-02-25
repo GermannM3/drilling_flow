@@ -60,14 +60,15 @@ class Order(Base):
 __all__ = [
     "User", 
     "Order", 
+    "OrderRating",
+    "Contractor",
     "ServiceType", 
     "UserRole", 
-    "OrderStatus",
-    "OrderRating"
+    "OrderStatus"
 ]
 
 # Импортируем OrderRating в конце, после определения всех зависимостей
-from .order_rating import OrderRating 
+from .rating import OrderRating 
 
 """
 Импорты моделей
@@ -82,4 +83,16 @@ __all__ = [
     "Order",
     "OrderRating",
     "Contractor"
-] 
+]
+
+"""
+Инициализация моделей БД
+"""
+from app.db.base import Base
+from .user import User
+from .order import Order
+from .rating import OrderRating
+from .contractor import Contractor
+
+# Экспортируем все модели, чтобы они были доступны при импорте из app.db.models
+__all__ = ["User", "Order", "OrderRating", "Contractor"] 

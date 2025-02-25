@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     KEEPALIVE: int = 120
     
     # База данных
-    DATABASE_URL: str
+    DATABASE_URL: str = "sqlite+aiosqlite:///./sql_app.db"
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
         return self.DATABASE_URL
     
     # Redis
-    REDIS_URL: str
+    REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
     REDIS_MAX_CONNECTIONS: int = 100
@@ -58,8 +58,8 @@ class Settings(BaseSettings):
     CACHE_PREFIX: str = "drillflow"
     
     # Безопасность
-    SECRET_KEY: str
-    JWT_SECRET_KEY: str
+    SECRET_KEY: str = "development_secret_key"
+    JWT_SECRET_KEY: str = "development_jwt_secret_key"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     SSL_ENABLED: bool = True
@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_SECOND: int = 100
     
     # Telegram
-    TELEGRAM_TOKEN: str
+    TELEGRAM_TOKEN: str = ""
     BOT_WEBHOOK_URL: Optional[str] = None
     BOT_WEBHOOK_DOMAIN: Optional[str] = None
     BOT_ADMIN_GROUP_ID: Optional[int] = None

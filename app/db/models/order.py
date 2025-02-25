@@ -2,7 +2,7 @@
 Модель заказа
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, text
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 import enum
@@ -23,7 +23,9 @@ class OrderStatus(str, enum.Enum):
 class Order(Base):
     """Модель заказа"""
     __tablename__ = "orders"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {
+        "extend_existing": True
+    }
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
@@ -35,21 +37,34 @@ class Order(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Внешние ключи
-    customer_id = Column(Integer, ForeignKey("users.id"))
-    contractor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    
-    # Связи
-    customer = relationship(
-        "app.db.models.user.User", 
-        foreign_keys=[customer_id], 
-        back_populates="customer_orders"
+    customer_id = Column(
+        Integer, 
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
     )
-    contractor = relationship(
-        "app.db.models.user.User", 
-        foreign_keys=[contractor_id], 
-        back_populates="contractor_orders"
+    contractor_id = Column(
+        Integer, 
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True
     )
-    ratings = relationship(
-        "app.db.models.rating.OrderRating", 
-        back_populates="order"
-    ) 
+
+# Импортируем классы после определения Order
+from app.db.models.user import User
+from app.db.models.rating import OrderRating
+
+# Добавляем отношения после импорта классов
+Order.customer = relationship(
+    User,
+    foreign_keys=[Order.customer_id],
+    back_populates="customer_orders"
+)
+Order.contractor = relationship(
+    User,
+    foreign_keys=[Order.contractor_id],
+    back_populates="contractor_orders"
+)
+Order.ratings = relationship(
+    OrderRating,
+    back_populates="order",
+    cascade="all, delete-orphan"
+) 

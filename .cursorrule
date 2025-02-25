@@ -1,0 +1,182 @@
+# Правила для курсора
+rules:
+  # Игнорируем системные файлы и директории
+  - pattern: "**/__pycache__/**"
+    ignore: true
+  - pattern: "**/.git/**"
+    ignore: true
+  - pattern: "**/.venv/**"
+    ignore: true
+  - pattern: "**/node_modules/**"
+    ignore: true
+
+  # Приоритеты для файлов моделей
+  - pattern: "app/db/models/__init__.py"
+    priority: 100
+  - pattern: "app/db/models/*.py"
+    priority: 90
+
+  # Приоритеты для файлов миграций
+  - pattern: "alembic/env.py"
+    priority: 80
+  - pattern: "alembic/versions/*.py"
+    priority: 70
+
+  # Приоритеты для файлов роутеров
+  - pattern: "app/routers/__init__.py"
+    priority: 60
+  - pattern: "app/routers/*.py"
+    priority: 50
+
+  # Приоритеты для файлов сервисов
+  - pattern: "app/services/__init__.py"
+    priority: 40
+  - pattern: "app/services/*.py"
+    priority: 30
+
+  # Приоритеты для конфигурационных файлов
+  - pattern: "alembic.ini"
+    priority: 20
+  - pattern: "*.ini"
+    priority: 10
+  - pattern: "*.yaml"
+    priority: 10
+  - pattern: "*.json"
+    priority: 10
+
+  # Остальные файлы
+  - pattern: "**/*"
+    priority: 0
+
+# Настройки для редактора
+editor:
+  # Максимальное количество строк контекста
+  max_context_lines: 10
+  
+  # Показывать только измененные строки
+  show_only_changes: true
+  
+  # Игнорировать пустые строки при подсчете контекста
+  ignore_empty_lines: true
+  
+  # Показывать номера строк
+  show_line_numbers: true
+
+# Правила создания файлов и папок
+file_creation:
+  # Автоматически создавать отсутствующие директории
+  create_missing_dirs: true
+  
+  # Создавать __init__.py в новых Python пакетах
+  create_init_files: true
+  
+  # Создавать .gitkeep в пустых директориях
+  create_gitkeep: true
+  
+  # Шаблоны для новых файлов
+  templates:
+    # Шаблон для Python файлов
+    python:
+      extension: ".py"
+      content: |
+        """
+        {{ description }}
+        """
+        
+        {{ imports }}
+        
+        {{ content }}
+    
+    # Шаблон для HTML файлов
+    html:
+      extension: ".html"
+      content: |
+        {% extends "base.html" %}
+        
+        {% block content %}
+        {{ content }}
+        {% endblock %}
+
+# Техническое задание
+specification:
+  name: "DrillFlow"
+  description: "Платформа для заказа услуг бурения скважин"
+  
+  features:
+    - name: "Авторизация"
+      description: "Регистрация и авторизация через Telegram"
+      
+    - name: "Заказы"
+      description: "Создание и управление заказами на бурение"
+      components:
+        - "Создание заказа с указанием параметров"
+        - "Автоматическое распределение заказов"
+        - "Отслеживание статуса заказа"
+        - "Система рейтингов и отзывов"
+        
+    - name: "Подрядчики"
+      description: "Управление подрядчиками и их заказами"
+      components:
+        - "Профиль подрядчика"
+        - "График работы"
+        - "Зона обслуживания"
+        - "Рейтинг и отзывы"
+        
+    - name: "Геолокация"
+      description: "Работа с геоданными"
+      components:
+        - "Определение координат заказа"
+        - "Расчет расстояний"
+        - "Зоны обслуживания подрядчиков"
+        
+    - name: "Уведомления"
+      description: "Система уведомлений через Telegram"
+      components:
+        - "Уведомления о новых заказах"
+        - "Уведомления об изменении статуса"
+        - "Напоминания"
+
+  models:
+    - name: "User"
+      fields:
+        - "telegram_id: int"
+        - "username: str"
+        - "full_name: str"
+        - "phone: str"
+        - "email: str"
+        - "is_active: bool"
+        - "is_verified: bool"
+        - "is_contractor: bool"
+        - "rating: float"
+        
+    - name: "Order"
+      fields:
+        - "title: str"
+        - "description: str"
+        - "location: str"
+        - "price: float"
+        - "status: enum"
+        - "customer_id: int"
+        - "contractor_id: int"
+        
+    - name: "OrderRating"
+      fields:
+        - "order_id: int"
+        - "contractor_id: int"
+        - "rating: float"
+        - "comment: str"
+
+  database:
+    type: "PostgreSQL"
+    migrations: "Alembic"
+    orm: "SQLAlchemy"
+
+  api:
+    type: "REST"
+    framework: "FastAPI"
+    documentation: "OpenAPI/Swagger"
+
+  deployment:
+    platform: "Docker"
+    ci_cd: "GitHub Actions"
+    hosting: "VPS/Cloud" 

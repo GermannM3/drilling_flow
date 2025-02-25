@@ -3,7 +3,7 @@
 """
 from sqlalchemy.ext.asyncio import create_async_engine
 from app.core.config import settings
-from app.db.base import Base
+from app.db.base import Base, import_models
 from alembic.config import Config
 from alembic import command
 import sqlalchemy.exc
@@ -11,6 +11,9 @@ import sqlalchemy.exc
 async def init_db():
     """Создание таблиц в базе данных"""
     engine = create_async_engine(settings.get_database_url, echo=True)
+    
+    # Импортируем модели для создания таблиц
+    import_models()
     
     # Пробуем применить миграции
     try:
