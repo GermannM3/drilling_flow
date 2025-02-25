@@ -13,8 +13,8 @@
     }
   ],
   "env": {
-    "DISABLE_BOT": "True",
-    "USE_POLLING": "False",
+    "DISABLE_BOT": "False",
+    "USE_POLLING": "True",
     "PYTHONPATH": "/var/task"
   },
   "functions": {
