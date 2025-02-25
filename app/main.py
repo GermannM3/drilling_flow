@@ -35,10 +35,16 @@ def create_app() -> FastAPI:
 
     # Монтируем статические файлы
     static_path = Path(__file__).parent / "static"
+    # Проверяем существование директории и создаем при необходимости
+    if not static_path.exists():
+        static_path.mkdir(parents=True, exist_ok=True)
     app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
     # Монтируем директорию для медиафайлов
     media_path = Path(__file__).parent / "media"
+    # Проверяем существование директории и создаем при необходимости
+    if not media_path.exists():
+        media_path.mkdir(parents=True, exist_ok=True)
     app.mount("/media", StaticFiles(directory=str(media_path)), name="media")
 
     # Подключаем метрики Prometheus
@@ -51,15 +57,20 @@ def create_app() -> FastAPI:
     async def startup_event():
         """Действия при запуске приложения"""
         await init_db()
-        await setup_bot_commands()
         
-        # Запускаем поллинг бота в фоновом режиме
-        try:
-            # Запускаем поллинг в фоновом режиме
-            asyncio.create_task(start_polling())
-            print("Bot polling started successfully")
-        except Exception as e:
-            print(f"Error starting bot polling: {e}")
+        # Настраиваем и запускаем бота только если он не отключен
+        if not settings.DISABLE_BOT:
+            await setup_bot_commands()
+            
+            # Запускаем поллинг бота в фоновом режиме
+            try:
+                # Запускаем поллинг в фоновом режиме
+                asyncio.create_task(start_polling())
+                print("Bot polling started successfully")
+            except Exception as e:
+                print(f"Error starting bot polling: {e}")
+        else:
+            print("Bot is disabled in settings, skipping bot initialization")
 
     @app.get("/health")
     async def health_check():

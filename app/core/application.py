@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .logger import setup_logging
 from .config import get_settings
 from app.routers import auth, orders, contractors, geo, webapp
+from pathlib import Path
 
 # Настройка логирования
 logger = setup_logging()
@@ -31,6 +32,25 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Проверяем и создаем директории для статических файлов
+    base_dir = Path(__file__).resolve().parent.parent
+    
+    # Директория для статических файлов
+    static_dir = base_dir / "static"
+    if not static_dir.exists():
+        static_dir.mkdir(parents=True, exist_ok=True)
+        
+    # Директория для статических файлов веб-приложения
+    webapp_static_dir = static_dir / "webapp"
+    if not webapp_static_dir.exists():
+        webapp_static_dir.mkdir(parents=True, exist_ok=True)
+        (webapp_static_dir / ".gitkeep").touch()
+    
+    # Директория для шаблонов
+    templates_dir = base_dir / "templates"
+    if not templates_dir.exists():
+        templates_dir.mkdir(parents=True, exist_ok=True)
 
     # Подключаем роуты
     app.include_router(auth, prefix="/api", tags=["auth"])

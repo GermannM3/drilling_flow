@@ -29,6 +29,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static" / "webapp"
 TEMPLATES_DIR = BASE_DIR / "templates"
 
+# Проверяем существование директории и создаем при необходимости
+if not STATIC_DIR.exists():
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+    # Создаем пустой файл .gitkeep для сохранения директории в git
+    (STATIC_DIR / ".gitkeep").touch()
+
 # Монтируем статические файлы
 router.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
