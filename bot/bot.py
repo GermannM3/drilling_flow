@@ -29,11 +29,21 @@ def get_token():
         logger.error("No Telegram token found. Please set TELEGRAM_TOKEN environment variable.")
         return None
         
+    logger.info(f"Using token: {token[:5]}...{token[-5:]}")
     return token
 
 # Создаем экземпляр бота и диспетчера
-bot = Bot(token=get_token())
-dp = Dispatcher()
+try:
+    token = get_token()
+    if not token:
+        raise ValueError("No valid token found")
+    
+    bot = Bot(token=token)
+    dp = Dispatcher()
+    logger.info("Bot and dispatcher initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize bot: {e}", exc_info=True)
+    raise
 
 # Создаем основную клавиатуру
 def get_main_keyboard():
@@ -146,7 +156,14 @@ async def main():
     except Exception as e:
         logger.error(f"Failed to start bot: {e}", exc_info=True)
     finally:
+        logger.info("Bot stopped, closing session")
         await bot.session.close()
 
 if __name__ == '__main__':
-    asyncio.run(main()) 
+    try:
+        logger.info("Bot script started")
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user (KeyboardInterrupt)")
+    except Exception as e:
+        logger.critical(f"Unhandled exception: {e}", exc_info=True) 

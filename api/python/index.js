@@ -5,11 +5,60 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const { exec } = require('child_process');
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Обслуживание статических файлов из директории public
 app.use(express.static('public'));
+
+// Маршрут для запуска бота
+app.get('/api/start-bot', (req, res) => {
+  // Проверяем, что бот не отключен в настройках
+  if (process.env.DISABLE_BOT === 'True') {
+    return res.json({
+      status: 'error',
+      message: 'Бот отключен в настройках',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Подготавливаем переменные окружения для бота
+  const env = {
+    ...process.env,
+    TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN || '7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs',
+    USE_POLLING: 'True',
+    DISABLE_BOT: 'False'
+  };
+
+  console.log('Запуск бота с токеном:', env.TELEGRAM_TOKEN);
+
+  // Запускаем бот через Python
+  const botProcess = exec('python bot/bot.py', { env }, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Ошибка запуска бота: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`Stderr: ${stderr}`);
+      return;
+    }
+    console.log(`Stdout: ${stdout}`);
+  });
+
+  // Устанавливаем обработчики событий для процесса
+  botProcess.on('error', (err) => {
+    console.error('Ошибка при запуске процесса бота:', err);
+  });
+
+  // Отправляем ответ
+  res.json({
+    status: 'success',
+    message: 'Бот запущен',
+    timestamp: new Date().toISOString(),
+    token_status: env.TELEGRAM_TOKEN ? 'Токен установлен' : 'Токен отсутствует'
+  });
+});
 
 // Маршрут для корневого URL
 app.get('/', (req, res) => {
