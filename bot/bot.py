@@ -1,169 +1,250 @@
-import logging
 import os
-import asyncio
+import sys
+import logging
+import traceback
+from datetime import datetime
 from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.utils import executor
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 # Настройка логирования
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('bot.log'),
-        logging.StreamHandler()
+        logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)
 
-# Получаем токен бота
-def get_token():
-    token = os.getenv('TELEGRAM_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN')
-    
-    # Если токен не найден в переменных окружения, используем захардкоженный токен
-    if not token:
-        token = "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs"
-        logger.warning("Using hardcoded token! This is not secure for production.")
-    
-    if not token:
-        logger.error("No Telegram token found. Please set TELEGRAM_TOKEN environment variable.")
-        return None
-        
-    logger.info(f"Using token: {token[:5]}...{token[-5:]}")
-    return token
+# Получаем токен из переменных окружения
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+USE_POLLING = os.getenv('USE_POLLING', 'False').lower() in ('true', '1', 't')
+DISABLE_BOT = os.getenv('DISABLE_BOT', 'False').lower() in ('true', '1', 't')
 
-# Создаем экземпляр бота и диспетчера
+# Проверка наличия токена
+if not TELEGRAM_TOKEN:
+    logger.error("TELEGRAM_TOKEN не найден в переменных окружения!")
+    sys.exit(1)
+
+logger.info(f"Инициализация бота с параметрами: USE_POLLING={USE_POLLING}, DISABLE_BOT={DISABLE_BOT}")
+logger.info(f"Токен: {TELEGRAM_TOKEN[:5]}...{TELEGRAM_TOKEN[-5:]}")
+
 try:
-    token = get_token()
-    if not token:
-        raise ValueError("No valid token found")
+    # Инициализация бота и диспетчера
+    bot = Bot(token=TELEGRAM_TOKEN)
+    dp = Dispatcher(bot)
+    dp.middleware.setup(LoggingMiddleware())
     
-    bot = Bot(token=token)
-    dp = Dispatcher()
-    logger.info("Bot and dispatcher initialized successfully")
+    # Создаем клавиатуру для основного меню
+    main_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    main_keyboard.add(KeyboardButton("📊 Статистика"))
+    main_keyboard.add(KeyboardButton("📝 Отчеты"), KeyboardButton("⚙️ Настройки"))
+    main_keyboard.add(KeyboardButton("❓ Помощь"))
+    
+    # Создаем инлайн клавиатуру для отчетов
+    reports_keyboard = InlineKeyboardMarkup(row_width=2)
+    reports_keyboard.add(
+        InlineKeyboardButton("Ежедневный", callback_data="report_daily"),
+        InlineKeyboardButton("Еженедельный", callback_data="report_weekly"),
+        InlineKeyboardButton("Ежемесячный", callback_data="report_monthly"),
+        InlineKeyboardButton("Годовой", callback_data="report_yearly")
+    )
+    
+    @dp.message_handler(commands=['start'])
+    async def cmd_start(message: types.Message):
+        try:
+            user_id = message.from_user.id
+            username = message.from_user.username
+            logger.info(f"Пользователь {username} (ID: {user_id}) запустил бота")
+            
+            await message.answer(
+                f"👋 Привет, {message.from_user.first_name}!\n\n"
+                f"Я бот для мониторинга бурения. Используйте меню для навигации.",
+                reply_markup=main_keyboard
+            )
+        except Exception as e:
+            logger.error(f"Ошибка в обработчике /start: {e}")
+            logger.error(traceback.format_exc())
+            await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
+    
+    @dp.message_handler(commands=['help'])
+    async def cmd_help(message: types.Message):
+        try:
+            logger.info(f"Пользователь {message.from_user.username} (ID: {message.from_user.id}) запросил помощь")
+            
+            help_text = (
+                "📚 *Справка по командам:*\n\n"
+                "/start - Запустить бота\n"
+                "/help - Показать эту справку\n"
+                "/stats - Показать статистику\n"
+                "/reports - Выбрать тип отчета\n"
+                "/settings - Настройки уведомлений\n\n"
+                "Вы также можете использовать кнопки меню для навигации."
+            )
+            
+            await message.answer(help_text, parse_mode="Markdown")
+        except Exception as e:
+            logger.error(f"Ошибка в обработчике /help: {e}")
+            logger.error(traceback.format_exc())
+            await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
+    
+    @dp.message_handler(commands=['stats'])
+    async def cmd_stats(message: types.Message):
+        try:
+            logger.info(f"Пользователь {message.from_user.username} (ID: {message.from_user.id}) запросил статистику")
+            
+            # Здесь будет логика получения реальных данных
+            current_date = datetime.now().strftime("%d.%m.%Y")
+            
+            stats_text = (
+                f"📊 *Статистика на {current_date}*\n\n"
+                f"🕑 Время работы: 12ч 30м\n"
+                f"🔄 Циклов бурения: 24\n"
+                f"📏 Глубина: 1250м\n"
+                f"⚠️ Предупреждений: 2\n"
+                f"❌ Ошибок: 0\n\n"
+                f"_Последнее обновление: {datetime.now().strftime('%H:%M:%S')}_"
+            )
+            
+            await message.answer(stats_text, parse_mode="Markdown")
+        except Exception as e:
+            logger.error(f"Ошибка в обработчике /stats: {e}")
+            logger.error(traceback.format_exc())
+            await message.answer("Произошла ошибка при получении статистики. Пожалуйста, попробуйте позже.")
+    
+    @dp.message_handler(commands=['reports'])
+    async def cmd_reports(message: types.Message):
+        try:
+            logger.info(f"Пользователь {message.from_user.username} (ID: {message.from_user.id}) запросил отчеты")
+            
+            await message.answer(
+                "📝 Выберите тип отчета:",
+                reply_markup=reports_keyboard
+            )
+        except Exception as e:
+            logger.error(f"Ошибка в обработчике /reports: {e}")
+            logger.error(traceback.format_exc())
+            await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
+    
+    @dp.callback_query_handler(lambda c: c.data.startswith('report_'))
+    async def process_report_callback(callback_query: types.CallbackQuery):
+        try:
+            report_type = callback_query.data.split('_')[1]
+            user_id = callback_query.from_user.id
+            username = callback_query.from_user.username
+            
+            logger.info(f"Пользователь {username} (ID: {user_id}) запросил отчет типа: {report_type}")
+            
+            report_titles = {
+                'daily': 'Ежедневный',
+                'weekly': 'Еженедельный',
+                'monthly': 'Ежемесячный',
+                'yearly': 'Годовой'
+            }
+            
+            await bot.answer_callback_query(callback_query.id)
+            await bot.send_message(
+                callback_query.from_user.id,
+                f"📊 *{report_titles[report_type]} отчет*\n\n"
+                f"Отчет за период: {datetime.now().strftime('%d.%m.%Y')}\n"
+                f"Статус: Генерация...\n\n"
+                f"Отчет будет готов в течение нескольких минут.",
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            logger.error(f"Ошибка в обработчике callback_query: {e}")
+            logger.error(traceback.format_exc())
+            await bot.send_message(
+                callback_query.from_user.id,
+                "Произошла ошибка при обработке запроса. Пожалуйста, попробуйте позже."
+            )
+    
+    @dp.message_handler(lambda message: message.text == "📊 Статистика")
+    async def text_stats(message: types.Message):
+        try:
+            await cmd_stats(message)
+        except Exception as e:
+            logger.error(f"Ошибка в обработчике текстовой команды 'Статистика': {e}")
+            logger.error(traceback.format_exc())
+            await message.answer("Произошла ошибка при получении статистики. Пожалуйста, попробуйте позже.")
+    
+    @dp.message_handler(lambda message: message.text == "📝 Отчеты")
+    async def text_reports(message: types.Message):
+        try:
+            await cmd_reports(message)
+        except Exception as e:
+            logger.error(f"Ошибка в обработчике текстовой команды 'Отчеты': {e}")
+            logger.error(traceback.format_exc())
+            await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
+    
+    @dp.message_handler(lambda message: message.text == "⚙️ Настройки")
+    async def text_settings(message: types.Message):
+        try:
+            logger.info(f"Пользователь {message.from_user.username} (ID: {message.from_user.id}) запросил настройки")
+            
+            await message.answer(
+                "⚙️ *Настройки уведомлений*\n\n"
+                "🔔 Критические предупреждения: Включены\n"
+                "🔕 Обычные уведомления: Выключены\n"
+                "⏰ Ежедневный отчет: Включен (08:00)\n"
+                "📅 Еженедельный отчет: Включен (Пн, 09:00)\n\n"
+                "_Для изменения настроек обратитесь к администратору._",
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            logger.error(f"Ошибка в обработчике текстовой команды 'Настройки': {e}")
+            logger.error(traceback.format_exc())
+            await message.answer("Произошла ошибка при получении настроек. Пожалуйста, попробуйте позже.")
+    
+    @dp.message_handler(lambda message: message.text == "❓ Помощь")
+    async def text_help(message: types.Message):
+        try:
+            await cmd_help(message)
+        except Exception as e:
+            logger.error(f"Ошибка в обработчике текстовой команды 'Помощь': {e}")
+            logger.error(traceback.format_exc())
+            await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
+    
+    @dp.message_handler()
+    async def echo(message: types.Message):
+        try:
+            logger.info(f"Получено сообщение от {message.from_user.username} (ID: {message.from_user.id}): {message.text}")
+            
+            await message.answer(
+                "Извините, я не понимаю эту команду. Используйте меню или введите /help для получения списка доступных команд.",
+                reply_markup=main_keyboard
+            )
+        except Exception as e:
+            logger.error(f"Ошибка в обработчике echo: {e}")
+            logger.error(traceback.format_exc())
+            await message.answer("Произошла ошибка при обработке сообщения. Пожалуйста, попробуйте позже.")
+    
+    # Функция для запуска бота
+    def start_polling():
+        try:
+            logger.info("Запуск бота в режиме polling")
+            executor.start_polling(dp, skip_updates=True)
+        except Exception as e:
+            logger.error(f"Ошибка при запуске бота: {e}")
+            logger.error(traceback.format_exc())
+            sys.exit(1)
+    
+    # Точка входа
+    if __name__ == '__main__':
+        logger.info("Бот запущен")
+        if DISABLE_BOT:
+            logger.warning("Бот отключен в настройках")
+            sys.exit(0)
+        
+        if USE_POLLING:
+            start_polling()
+        else:
+            logger.info("Режим polling не активирован, бот не будет запущен")
+            sys.exit(0)
+
 except Exception as e:
-    logger.error(f"Failed to initialize bot: {e}", exc_info=True)
-    raise
-
-# Создаем основную клавиатуру
-def get_main_keyboard():
-    keyboard = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="🔍 Создать заказ"), KeyboardButton(text="📋 Мои заказы")],
-            [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="⭐ Рейтинг")],
-            [KeyboardButton(text="📞 Поддержка"), KeyboardButton(text="ℹ️ Помощь")]
-        ],
-        resize_keyboard=True,
-        input_field_placeholder="Выберите действие"
-    )
-    return keyboard
-
-# Создаем инлайн-клавиатуру для заказа
-def get_order_keyboard():
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Бурение скважины", callback_data="order_drilling")],
-            [InlineKeyboardButton(text="Ремонт скважины", callback_data="order_repair")],
-            [InlineKeyboardButton(text="Обслуживание", callback_data="order_maintenance")],
-            [InlineKeyboardButton(text="Отмена", callback_data="cancel")]
-        ]
-    )
-    return keyboard
-
-# Обработчик команды /start
-@dp.message(Command("start"))
-async def cmd_start(message: Message):
-    logger.info(f"Start command from user {message.from_user.id}")
-    try:
-        await message.answer(
-            'Привет! Я бот DrillFlow. Выберите действие на клавиатуре:',
-            reply_markup=get_main_keyboard()
-        )
-        logger.info("Successfully sent start message")
-    except Exception as e:
-        logger.error(f"Error in start command: {e}", exc_info=True)
-
-# Обработчик команды /help
-@dp.message(Command("help"))
-async def cmd_help(message: Message):
-    help_text = """
-    Доступные команды:
-    /start - Начать работу с ботом
-    /help - Показать справку
-    /profile - Ваш профиль
-    /order - Создать заказ
-    /status - Статус заказов
-    """
-    await message.answer(help_text, reply_markup=get_main_keyboard())
-
-# Обработчик команды /order
-@dp.message(Command("order"))
-async def cmd_order(message: Message):
-    await message.answer(
-        "Выберите тип услуги:",
-        reply_markup=get_order_keyboard()
-    )
-
-# Обработчик нажатий на инлайн-кнопки
-@dp.callback_query()
-async def process_callback(callback_query: types.CallbackQuery):
-    callback_data = callback_query.data
-    
-    if callback_data == "order_drilling":
-        await callback_query.message.answer("Вы выбрали бурение скважины. Укажите адрес:")
-    elif callback_data == "order_repair":
-        await callback_query.message.answer("Вы выбрали ремонт скважины. Укажите адрес:")
-    elif callback_data == "order_maintenance":
-        await callback_query.message.answer("Вы выбрали обслуживание скважины. Укажите адрес:")
-    elif callback_data == "cancel":
-        await callback_query.message.answer("Действие отменено", reply_markup=get_main_keyboard())
-    
-    # Обязательно отвечаем на callback_query
-    await callback_query.answer()
-
-# Обработчик текстовых сообщений (для кнопок основной клавиатуры)
-@dp.message()
-async def handle_text(message: types.Message):
-    text = message.text
-    
-    if text == "🔍 Создать заказ":
-        await message.answer("Выберите тип услуги:", reply_markup=get_order_keyboard())
-    elif text == "📋 Мои заказы":
-        await message.answer("Ваши заказы:\n\nУ вас пока нет активных заказов.")
-    elif text == "👤 Профиль":
-        user_info = f"""
-        Профиль пользователя:
-        ID: {message.from_user.id}
-        Имя: {message.from_user.first_name} {message.from_user.last_name or ''}
-        Username: @{message.from_user.username or 'отсутствует'}
-        """
-        await message.answer(user_info)
-    elif text == "⭐ Рейтинг":
-        await message.answer("Топ подрядчиков по рейтингу:\n\n1. ООО 'БурСервис' - 4.9⭐\n2. ИП Иванов - 4.8⭐\n3. ООО 'АкваДрилл' - 4.7⭐")
-    elif text == "📞 Поддержка":
-        await message.answer("Для связи с поддержкой напишите на email: support@drillflow.ru или позвоните по телефону: +7 (800) 123-45-67")
-    elif text == "ℹ️ Помощь":
-        await cmd_help(message)
-    else:
-        await message.answer(f"Получено сообщение: {text}", reply_markup=get_main_keyboard())
-
-# Функция запуска бота
-async def main():
-    try:
-        logger.info("Starting bot...")
-        # Запускаем бота
-        await dp.start_polling(bot)
-    except Exception as e:
-        logger.error(f"Failed to start bot: {e}", exc_info=True)
-    finally:
-        logger.info("Bot stopped, closing session")
-        await bot.session.close()
-
-if __name__ == '__main__':
-    try:
-        logger.info("Bot script started")
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Bot stopped by user (KeyboardInterrupt)")
-    except Exception as e:
-        logger.critical(f"Unhandled exception: {e}", exc_info=True) 
+    logger.critical(f"Критическая ошибка при инициализации бота: {e}")
+    logger.critical(traceback.format_exc())
+    sys.exit(1) 

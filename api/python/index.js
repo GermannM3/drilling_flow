@@ -5,7 +5,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -14,8 +14,11 @@ app.use(express.static('public'));
 
 // Маршрут для запуска бота
 app.get('/api/start-bot', (req, res) => {
+  console.log('Получен запрос на запуск бота');
+  
   // Проверяем, что бот не отключен в настройках
   if (process.env.DISABLE_BOT === 'True') {
+    console.log('Бот отключен в настройках');
     return res.json({
       status: 'error',
       message: 'Бот отключен в настройках',
@@ -28,36 +31,83 @@ app.get('/api/start-bot', (req, res) => {
     ...process.env,
     TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN || '7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs',
     USE_POLLING: 'True',
-    DISABLE_BOT: 'False'
+    DISABLE_BOT: 'False',
+    PATH: process.env.PATH
   };
 
   console.log('Запуск бота с токеном:', env.TELEGRAM_TOKEN);
-
-  // Запускаем бот через Python
-  const botProcess = exec('python bot/bot.py', { env }, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Ошибка запуска бота: ${error.message}`);
-      return;
+  console.log('Текущая директория:', process.cwd());
+  
+  try {
+    // Проверяем существование файла бота
+    const botPath = path.join(process.cwd(), 'bot/bot.py');
+    if (!fs.existsSync(botPath)) {
+      console.error(`Файл бота не найден по пути: ${botPath}`);
+      return res.json({
+        status: 'error',
+        message: 'Файл бота не найден',
+        path: botPath,
+        timestamp: new Date().toISOString()
+      });
     }
-    if (stderr) {
-      console.error(`Stderr: ${stderr}`);
-      return;
-    }
-    console.log(`Stdout: ${stdout}`);
-  });
-
-  // Устанавливаем обработчики событий для процесса
-  botProcess.on('error', (err) => {
-    console.error('Ошибка при запуске процесса бота:', err);
-  });
-
-  // Отправляем ответ
-  res.json({
-    status: 'success',
-    message: 'Бот запущен',
-    timestamp: new Date().toISOString(),
-    token_status: env.TELEGRAM_TOKEN ? 'Токен установлен' : 'Токен отсутствует'
-  });
+    
+    console.log(`Файл бота найден: ${botPath}`);
+    
+    // Используем spawn вместо exec для лучшего контроля процесса
+    const botProcess = spawn('python', ['bot/bot.py'], { 
+      env,
+      shell: true,
+      detached: true,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    
+    let stdoutData = '';
+    let stderrData = '';
+    
+    // Собираем вывод из stdout
+    botProcess.stdout.on('data', (data) => {
+      const output = data.toString();
+      stdoutData += output;
+      console.log(`Вывод бота: ${output}`);
+    });
+    
+    // Собираем ошибки из stderr
+    botProcess.stderr.on('data', (data) => {
+      const error = data.toString();
+      stderrData += error;
+      console.error(`Ошибка бота: ${error}`);
+    });
+    
+    // Обработка ошибок запуска процесса
+    botProcess.on('error', (err) => {
+      console.error('Ошибка при запуске процесса бота:', err);
+      return res.json({
+        status: 'error',
+        message: `Ошибка запуска бота: ${err.message}`,
+        timestamp: new Date().toISOString()
+      });
+    });
+    
+    // Отправляем ответ не дожидаясь завершения процесса
+    res.json({
+      status: 'success',
+      message: 'Бот запущен',
+      timestamp: new Date().toISOString(),
+      token_status: env.TELEGRAM_TOKEN ? 'Токен установлен' : 'Токен отсутствует',
+      process_id: botProcess.pid
+    });
+    
+    // Отсоединяем процесс от родителя, чтобы он продолжал работать после завершения запроса
+    botProcess.unref();
+    
+  } catch (error) {
+    console.error('Критическая ошибка при запуске бота:', error);
+    res.json({
+      status: 'error',
+      message: `Критическая ошибка: ${error.message}`,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Маршрут для корневого URL
@@ -212,10 +262,15 @@ app.get('/', (req, res) => {
 // Маршрут для API
 app.get('/api', (req, res) => {
   res.json({
-    status: 'online',
-    message: 'DrillFlow API работает',
+    status: 'ok',
+    message: 'API работает',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      DISABLE_BOT: process.env.DISABLE_BOT,
+      USE_POLLING: process.env.USE_POLLING,
+      TELEGRAM_TOKEN_STATUS: process.env.TELEGRAM_TOKEN ? 'установлен' : 'не установлен'
+    }
   });
 });
 
