@@ -3,10 +3,14 @@ import sys
 import logging
 import traceback
 from datetime import datetime
+from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.utils import executor
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+
+# Загружаем переменные окружения из .env файла
+load_dotenv()
 
 # Настройка логирования
 logging.basicConfig(
@@ -19,9 +23,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Получаем токен из переменных окружения
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-USE_POLLING = os.getenv('USE_POLLING', 'False').lower() in ('true', '1', 't')
-DISABLE_BOT = os.getenv('DISABLE_BOT', 'False').lower() in ('true', '1', 't')
+# TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+TELEGRAM_TOKEN = "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs"  # Временно используем токен напрямую
+# USE_POLLING = os.getenv('USE_POLLING', 'False').lower() in ('true', '1', 't')
+# DISABLE_BOT = os.getenv('DISABLE_BOT', 'False').lower() in ('true', '1', 't')
+USE_POLLING = True  # Временно включаем режим поллинга
+DISABLE_BOT = False  # Временно включаем бота
 
 # Проверка наличия токена
 if not TELEGRAM_TOKEN:
