@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "bash vercel-build.sh",
   "outputDirectory": "public",
   "routes": [
     {
@@ -9,7 +9,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/api/vercel.py"
+      "dest": "/api/index.py"
     }
   ],
   "env": {
@@ -18,7 +18,7 @@
     "PYTHONPATH": "/var/task"
   },
   "functions": {
-    "api/vercel.py": {
+    "api/*.py": {
       "memory": 1024,
       "maxDuration": 10,
       "runtime": "@vercel/python@3.1.0"
@@ -26,10 +26,11 @@
   },
   "builds": [
     {
-      "src": "api/vercel.py",
+      "src": "api/*.py",
       "use": "@vercel/python@3.1.0",
       "config": {
-        "pip": ["pip", "install", "-r", "requirements-vercel.txt"]
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9"
       }
     },
     {
