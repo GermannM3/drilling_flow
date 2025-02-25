@@ -4,6 +4,10 @@
     {
       "src": "app/vercel.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "app/static/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -17,6 +21,14 @@
     }
   ],
   "env": {
+    "DISABLE_BOT": "True",
+    "USE_POLLING": "False",
     "PYTHONPATH": "/var/task"
+  },
+  "functions": {
+    "app/vercel.py": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
   }
 } 

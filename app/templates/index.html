@@ -157,4 +157,32 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Проверяем, загрузились ли реальные данные или используются демонстрационные
+        setTimeout(function() {
+            const checkDataLoaded = function() {
+                // Проверяем наличие демонстрационных данных по характерным признакам
+                // Например, проверяем наличие определенных значений в тексте страницы
+                const textContent = document.body.textContent || '';
+                
+                // Проверяем наличие демо-данных (например, заказ #1234 или другие фиксированные значения)
+                if (textContent.includes('Заказ #1234') || 
+                    textContent.includes('Администратор') && textContent.includes('247')) {
+                    
+                    // Если найдены демонстрационные данные, показываем уведомление
+                    if (window.drillflowUtils && window.drillflowUtils.showNotification) {
+                        window.drillflowUtils.showNotification(
+                            'Отображаются демонстрационные данные. Для получения актуальной информации, пожалуйста, авторизуйтесь.',
+                            'info'
+                        );
+                    }
+                }
+            };
+            
+            checkDataLoaded();
+        }, 1500); // Даем время для загрузки данных
+    });
+</script>
 {% endblock %}

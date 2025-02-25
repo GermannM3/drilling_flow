@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DrillFlow - {% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='webapp/style.css') }}" onerror="this.onerror=null;this.href='/static/webapp/style.css';">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    
+    <!-- Встроенные базовые стили для случая, когда внешние стили недоступны -->
     <style>
         body {
             line-height: inherit;
@@ -17,7 +16,6 @@
             font-family: 'Inter', sans-serif;
             color: #e0f2fe;
         }
-        /* Базовые стили на случай, если основные стили не загрузятся */
         .fallback-container {
             padding: 2rem;
             max-width: 1200px;
@@ -33,7 +31,61 @@
         a:hover {
             text-decoration: underline;
         }
+        .card {
+            background: rgba(30, 58, 138, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            border: 2px solid rgba(59, 130, 246, 0.2);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+            background-color: #3b82f6;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        .btn:hover {
+            background-color: #2563eb;
+        }
+        .flex {
+            display: flex;
+        }
+        .grid {
+            display: grid;
+            gap: 1rem;
+        }
+        @media (min-width: 640px) {
+            .grid-cols-2 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1024px) {
+            .grid-cols-3 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .grid-cols-4 {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
     </style>
+    
+    <!-- Предзагрузчик для обработки ошибок -->
+    <script src="{{ url_for('static', path='webapp/preload.js') }}" onerror="this.onerror=null;this.src='/static/webapp/preload.js';console.error('Ошибка загрузки предзагрузчика');"></script>
+    
+    <!-- Проверка доступности статических файлов -->
+    <script src="{{ url_for('static', path='webapp/check.js') }}" onerror="this.onerror=null;this.src='/static/webapp/check.js';console.error('Ошибка загрузки проверки статических файлов');"></script>
+    
+    <!-- Внешние стили с обработкой ошибок -->
+    <link rel="stylesheet" href="{{ url_for('static', path='webapp/style.css') }}" onerror="this.onerror=null;this.href='/static/webapp/style.css';window.drillflowUtils.loadFallbackStyles();">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" onerror="console.warn('Не удалось загрузить шрифты Google');">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" onerror="console.warn('Не удалось загрузить иконки Material');">
+    
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -41,15 +93,29 @@
         {% block content %}{% endblock %}
     </div>
     
-    <script src="{{ url_for('static', path='webapp/script.js') }}" onerror="this.onerror=null;this.src='/static/webapp/script.js';"></script>
+    <!-- Внешний JavaScript с обработкой ошибок -->
+    <script src="{{ url_for('static', path='webapp/script.js') }}" onerror="this.onerror=null;this.src='/static/webapp/script.js';window.drillflowUtils.showNotification('Не удалось загрузить основной скрипт. Некоторые функции могут быть недоступны.', 'error');"></script>
+    
+    <!-- Обработка ошибок загрузки данных -->
     <script>
-        // Обработка ошибок загрузки ресурсов
-        window.addEventListener('error', function(e) {
-            if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
-                console.warn('Ресурс не загружен:', e.target.href || e.target.src);
-            }
-        }, true);
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверяем, загрузились ли данные
+            setTimeout(function() {
+                // Проверка наличия демо-данных или заглушек
+                const checkForPlaceholders = function() {
+                    const textContent = document.body.textContent || '';
+                    if (textContent.includes('Демонстрационные данные') || 
+                        textContent.includes('Нет данных') || 
+                        textContent.includes('Ошибка загрузки')) {
+                        window.drillflowUtils.showNotification('Используются демонстрационные данные. Некоторые функции могут быть недоступны.', 'info');
+                    }
+                };
+                
+                checkForPlaceholders();
+            }, 1000);
+        });
     </script>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html> 

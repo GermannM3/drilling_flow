@@ -19,6 +19,7 @@ from ..core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.rating import get_contractor_rating
 from sqlalchemy import text
+import os
 
 router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
@@ -29,14 +30,35 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static" / "webapp"
 TEMPLATES_DIR = BASE_DIR / "templates"
 
-# Проверяем существование директории и создаем при необходимости
-if not STATIC_DIR.exists():
-    STATIC_DIR.mkdir(parents=True, exist_ok=True)
-    # Создаем пустой файл .gitkeep для сохранения директории в git
-    (STATIC_DIR / ".gitkeep").touch()
+# Проверяем, находимся ли мы в среде Vercel (где файловая система только для чтения)
+IS_VERCEL = os.environ.get('VERCEL', False)
 
-# Монтируем статические файлы
-router.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+# Создаем директории только если мы не в среде Vercel
+if not IS_VERCEL:
+    # Проверяем существование директории и создаем при необходимости
+    if not STATIC_DIR.exists():
+        try:
+            STATIC_DIR.mkdir(parents=True, exist_ok=True)
+            # Создаем пустой файл .gitkeep для сохранения директории в git
+            (STATIC_DIR / ".gitkeep").touch()
+        except OSError as e:
+            logger.warning(f"Не удалось создать директорию {STATIC_DIR}: {e}")
+
+# Монтируем статические файлы, используя try-except для обработки ошибок
+try:
+    router.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+except Exception as e:
+    logger.error(f"Ошибка при монтировании статических файлов: {e}")
+    # Создаем заглушку для статических файлов
+    class DummyStaticFiles:
+        def __init__(self, *args, **kwargs):
+            pass
+        
+        async def __call__(self, scope, receive, send):
+            response = JSONResponse({"error": "Статические файлы недоступны"})
+            await response(scope, receive, send)
+    
+    router.mount("/static", DummyStaticFiles(), name="static")
 
 # Инициализируем шаблоны
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -281,4 +303,44 @@ async def webapp(request: Request):
             "request": request,
             "page": "webapp"
         }
+    )
+
+@router.get("/error", response_class=HTMLResponse)
+async def error_page(request: Request, code: int = 500, message: str = None):
+    """Страница ошибки"""
+    return templates.TemplateResponse(
+        "error.html", 
+        {
+            "request": request,
+            "error_code": code,
+            "error_message": message
+        }
+    )
+
+@router.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Обработчик HTTP-исключений"""
+    logger.error(f"HTTP error: {exc.status_code} - {exc.detail}")
+    return templates.TemplateResponse(
+        "error.html", 
+        {
+            "request": request,
+            "error_code": exc.status_code,
+            "error_message": exc.detail
+        },
+        status_code=exc.status_code
+    )
+
+@router.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Обработчик общих исключений"""
+    logger.error(f"Unhandled exception: {str(exc)}")
+    return templates.TemplateResponse(
+        "error.html", 
+        {
+            "request": request,
+            "error_code": 500,
+            "error_message": "Внутренняя ошибка сервера"
+        },
+        status_code=500
     ) 

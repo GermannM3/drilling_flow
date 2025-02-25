@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrillFlow - Ошибка</title>
+    
+    <style>
+        body {
+            line-height: inherit;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #111827, #1e3a8a, #064e3b);
+            font-family: 'Inter', sans-serif;
+            color: #e0f2fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .error-container {
+            max-width: 600px;
+            padding: 2rem;
+            background: rgba(30, 58, 138, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            border: 2px solid rgba(59, 130, 246, 0.2);
+            text-align: center;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            color: #7dd3fc;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .error-code {
+            font-size: 5rem;
+            font-weight: 900;
+            color: #ef4444;
+            margin: 1rem 0;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+            background-color: #3b82f6;
+            color: white;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+        }
+        
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="icon">⚠️</div>
+        <h1>Произошла ошибка</h1>
+        <div class="error-code">{{ error_code|default('500') }}</div>
+        <p>{{ error_message|default('Произошла ошибка при загрузке страницы. Пожалуйста, попробуйте обновить страницу или вернитесь позже.') }}</p>
+        <p>Если проблема повторяется, пожалуйста, свяжитесь с нами.</p>
+        <a href="/" class="btn">Вернуться на главную</a>
+    </div>
+    
+    <script>
+        // Простой скрипт для отображения дополнительной информации об ошибке
+        document.addEventListener('DOMContentLoaded', function() {
+            // Получаем параметры из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const errorCode = urlParams.get('code');
+            const errorMessage = urlParams.get('message');
+            
+            // Обновляем содержимое страницы, если параметры присутствуют
+            if (errorCode) {
+                document.querySelector('.error-code').textContent = errorCode;
+            }
+            
+            if (errorMessage) {
+                document.querySelector('p').textContent = decodeURIComponent(errorMessage);
+            }
+        });
+    </script>
+</body>
+</html> 
