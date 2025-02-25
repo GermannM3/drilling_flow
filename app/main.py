@@ -72,7 +72,8 @@ def create_app() -> FastAPI:
         # В среде Vercel пропускаем монтирование, если директория не существует
 
     # Подключаем метрики Prometheus
-    Instrumentator().instrument(app).expose(app)
+    if not IS_VERCEL:
+        Instrumentator().instrument(app).expose(app)
 
     # Подключаем роутеры
     app.include_router(api_router)
@@ -83,7 +84,7 @@ def create_app() -> FastAPI:
         await init_db()
         
         # Настраиваем и запускаем бота только если он не отключен
-        if not settings.DISABLE_BOT:
+        if not settings.DISABLE_BOT and not IS_VERCEL:
             await setup_bot_commands()
             
             # Запускаем поллинг бота в фоновом режиме
@@ -94,28 +95,30 @@ def create_app() -> FastAPI:
             except Exception as e:
                 print(f"Error starting bot polling: {e}")
         else:
-            print("Bot is disabled in settings, skipping bot initialization")
+            print("Bot is disabled in settings or running in Vercel, skipping bot initialization")
 
     @app.get("/health")
     async def health_check():
         """Проверка здоровья сервиса"""
         return {"status": "ok"}
 
+    @app.get("/")
+    async def root():
+        return {
+            "status": "ok",
+            "version": settings.VERSION,
+            "environment": "testing" if settings.TESTING else "production"
+        }
+
     return app
 
 # Настраиваем маппинги SQLAlchemy
 configure_mappers()
 
+# Создаем экземпляр приложения
 app = create_app()
 
-@app.get("/")
-async def root():
-    return {
-        "status": "ok",
-        "version": settings.VERSION,
-        "environment": "testing" if settings.TESTING else "production"
-    }
-
+# Запускаем приложение только если запущено напрямую (не через импорт)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True) 
