@@ -4,16 +4,8 @@
   "outputDirectory": "public",
   "routes": [
     {
-      "src": "/static/(.*)",
-      "dest": "/public/$1"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/python/index.py"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/api/index.py"
+      "dest": "/api/python/index.js"
     }
   ],
   "env": {
@@ -23,20 +15,8 @@
   },
   "builds": [
     {
-      "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb",
-        "memory": 1024,
-        "maxDuration": 10
-      }
-    },
-    {
-      "src": "api/python/index.py",
-      "use": "@vercel/node",
-      "config": {
-        "maxLambdaSize": "15mb"
-      }
+      "src": "api/python/index.js",
+      "use": "@vercel/node"
     },
     {
       "src": "package.json",
