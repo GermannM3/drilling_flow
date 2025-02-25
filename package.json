@@ -1,9 +1,10 @@
 {
-  "name": "drillflow",
+  "name": "drilling-flow",
   "version": "1.0.0",
+  "description": "Drilling Flow Application",
   "scripts": {
-    "vercel-build": "pip install -r requirements-vercel.txt && alembic upgrade head",
-    "build": "npm install && mkdir -p static/webapp app/static/webapp && npx tailwindcss -i ./static/webapp/style.css -o ./static/webapp/output.css --minify && cp ./static/webapp/output.css ./app/static/webapp/output.css",
+    "vercel-build": "python -m pip install -r requirements-vercel.txt && alembic upgrade head && mkdir -p public && cp -r app/static/* public/ || true",
+    "build": "npm install && mkdir -p static/webapp app/static/webapp && npx tailwindcss -i ./static/webapp/style.css -o ./static/webapp/output.css --minify && cp ./static/webapp/output.css ./app/static/webapp/output.css && mkdir -p public && cp -r app/static/* public/ || true",
     "start": "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT",
     "dev": "npm run watch:css & uvicorn app.main:app --reload",
     "prod": "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4",
@@ -12,11 +13,13 @@
     "celery": "python -m celery -A app.worker worker --loglevel=info",
     "bot": "python app/bot/main.py",
     "build:css": "tailwindcss -i ./app/static/webapp/css/style.css -o ./app/static/webapp/css/output.css --minify",
-    "watch:css": "tailwindcss -i ./app/static/webapp/css/style.css -o ./app/static/webapp/css/output.css --watch"
+    "watch:css": "npx tailwindcss -i ./static/webapp/style.css -o ./static/webapp/output.css --watch"
   },
-  "devDependencies": {
-    "autoprefixer": "^10.4.16",
+  "dependencies": {
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
