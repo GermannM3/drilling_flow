@@ -1,4 +1,14 @@
-from app.main import app
+"""
+Точка входа для Vercel Serverless Functions.
+"""
+import os
 
-# Экспортируем приложение для Vercel
+# Устанавливаем флаг, что мы в среде Vercel
+os.environ['VERCEL'] = 'True'
+
+from app.core.application import create_app
+
+app = create_app()
+
+# Экспортируем приложение как handler для Vercel
 handler = app 
