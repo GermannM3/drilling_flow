@@ -1,15 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "app/vercel.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "app/static/**",
-      "use": "@vercel/static"
-    }
-  ],
   "routes": [
     {
       "src": "/static/(.*)",
@@ -17,7 +7,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "app/vercel.py"
+      "dest": "/app/vercel.py"
     }
   ],
   "env": {
@@ -28,7 +18,9 @@
   "functions": {
     "app/vercel.py": {
       "memory": 1024,
-      "maxDuration": 10
+      "maxDuration": 10,
+      "runtime": "@vercel/python"
     }
-  }
+  },
+  "buildCommand": "chmod +x vercel-build.sh && ./vercel-build.sh"
 } 
