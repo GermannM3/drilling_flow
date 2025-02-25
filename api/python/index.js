@@ -5,12 +5,14 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { exec, spawn } = require('child_process');
+const { spawn } = require('child_process');
+const bodyParser = require('body-parser');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 
 // Обслуживание статических файлов из директории public
 app.use(express.static('public'));
+app.use(bodyParser.json());
 
 // Маршрут для запуска бота
 app.get('/api/start-bot', (req, res) => {
@@ -29,13 +31,13 @@ app.get('/api/start-bot', (req, res) => {
   // Подготавливаем переменные окружения для бота
   const env = {
     ...process.env,
-    TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN || '7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs',
+    TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN,
     USE_POLLING: 'True',
     DISABLE_BOT: 'False',
     PATH: process.env.PATH
   };
 
-  console.log('Запуск бота с токеном:', env.TELEGRAM_TOKEN);
+  console.log('Запуск бота с токеном:', env.TELEGRAM_TOKEN ? env.TELEGRAM_TOKEN.substring(0, 5) + '...' + env.TELEGRAM_TOKEN.substring(env.TELEGRAM_TOKEN.length - 5) : 'не установлен');
   console.log('Текущая директория:', process.cwd());
   
   try {
@@ -110,156 +112,53 @@ app.get('/api/start-bot', (req, res) => {
   }
 });
 
-// Маршрут для корневого URL
-app.get('/', (req, res) => {
-  // Проверяем наличие файла index.html в директории public
-  const indexPath = path.join(process.cwd(), 'public', 'index.html');
+// Обработчик для Telegram webhook
+app.post('/webhook/:token', (req, res) => {
+  const token = req.params.token;
   
-  if (fs.existsSync(indexPath)) {
-    // Если файл существует, отправляем его
-    res.sendFile(indexPath);
-  } else {
-    // Если файл не существует, генерируем HTML на лету
-    const html = `
-    <!DOCTYPE html>
-    <html lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DrillFlow - Система управления буровыми работами</title>
-        <style>
-            body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                margin: 0;
-                padding: 0;
-                background-color: #f5f5f5;
-            }
-            .container {
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 20px;
-            }
-            header {
-                background-color: #2c3e50;
-                color: white;
-                padding: 1rem 0;
-                text-align: center;
-            }
-            .hero {
-                background-color: #3498db;
-                color: white;
-                padding: 3rem 0;
-                text-align: center;
-            }
-            .hero h1 {
-                font-size: 2.5rem;
-                margin-bottom: 1rem;
-            }
-            .hero p {
-                font-size: 1.2rem;
-                max-width: 800px;
-                margin: 0 auto;
-            }
-            .features {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-between;
-                margin: 2rem 0;
-            }
-            .feature {
-                flex: 1;
-                min-width: 300px;
-                background: white;
-                margin: 1rem;
-                padding: 1.5rem;
-                border-radius: 5px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            }
-            .feature h3 {
-                color: #2c3e50;
-                margin-top: 0;
-            }
-            footer {
-                background-color: #2c3e50;
-                color: white;
-                text-align: center;
-                padding: 1rem 0;
-                margin-top: 2rem;
-            }
-            .status {
-                background-color: #27ae60;
-                color: white;
-                padding: 0.5rem;
-                border-radius: 4px;
-                display: inline-block;
-                margin-top: 1rem;
-            }
-            .cta-button {
-                display: inline-block;
-                background-color: #e74c3c;
-                color: white;
-                padding: 0.8rem 1.5rem;
-                margin-top: 1rem;
-                text-decoration: none;
-                border-radius: 4px;
-                font-weight: bold;
-                transition: background-color 0.3s;
-            }
-            .cta-button:hover {
-                background-color: #c0392b;
-            }
-        </style>
-    </head>
-    <body>
-        <header>
-            <div class="container">
-                <h2>DrillFlow</h2>
-            </div>
-        </header>
-        
-        <section class="hero">
-            <div class="container">
-                <h1>Система управления буровыми работами</h1>
-                <p>Эффективное управление буровыми работами, мониторинг и аналитика в режиме реального времени</p>
-                <div class="status">Сервер онлайн: ${new Date().toLocaleString('ru-RU')}</div>
-                <p><a href="/api/docs" class="cta-button">API Документация</a></p>
-            </div>
-        </section>
-        
-        <div class="container">
-            <section class="features">
-                <div class="feature">
-                    <h3>Мониторинг в реальном времени</h3>
-                    <p>Отслеживайте все параметры буровых работ в режиме реального времени с помощью интуитивно понятного интерфейса.</p>
-                </div>
-                <div class="feature">
-                    <h3>Аналитика и отчеты</h3>
-                    <p>Получайте детальную аналитику и формируйте отчеты для оптимизации процессов и снижения затрат.</p>
-                </div>
-                <div class="feature">
-                    <h3>Управление ресурсами</h3>
-                    <p>Эффективно управляйте персоналом, оборудованием и материалами для максимальной производительности.</p>
-                </div>
-            </section>
-        </div>
-        
-        <footer>
-            <div class="container">
-                <p>&copy; ${new Date().getFullYear()} DrillFlow. Все права защищены.</p>
-            </div>
-        </footer>
-    </body>
-    </html>
-    `;
+  // Проверяем, что токен совпадает с нашим
+  if (token !== process.env.TELEGRAM_TOKEN) {
+    console.error('Неверный токен в запросе вебхука');
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  
+  console.log('Получен запрос от Telegram webhook');
+  
+  // Передаем данные боту через временный файл
+  const updateData = req.body;
+  const updateFile = path.join(process.cwd(), 'update.json');
+  
+  try {
+    fs.writeFileSync(updateFile, JSON.stringify(updateData, null, 2));
     
-    res.setHeader('Content-Type', 'text/html');
-    res.send(html);
+    // Запускаем обработчик апдейта с передачей файла
+    const env = {
+      ...process.env,
+      TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN,
+      USE_POLLING: 'False',
+      DISABLE_BOT: 'False',
+      UPDATE_FILE: updateFile,
+      PATH: process.env.PATH
+    };
+    
+    const updateProcess = spawn('python', ['bot/process_update.py'], {
+      env,
+      detached: true,
+      stdio: 'ignore'
+    });
+    
+    updateProcess.unref();
+    
+    // Немедленно отвечаем телеграму успехом
+    res.status(200).send('OK');
+    
+  } catch (error) {
+    console.error('Ошибка при обработке вебхука:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-// Маршрут для API
+// Маршрут для API информации
 app.get('/api', (req, res) => {
   res.json({
     status: 'ok',
@@ -274,17 +173,26 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Обработка всех остальных маршрутов
-app.get('*', (req, res) => {
-  res.redirect('/');
+// Маршрут для корневого URL
+app.get('/', (req, res) => {
+  // Проверяем наличие файла index.html в директории public
+  const indexPath = path.join(process.cwd(), 'public', 'index.html');
+  
+  if (fs.existsSync(indexPath)) {
+    // Если файл существует, отправляем его
+    res.sendFile(indexPath);
+  } else {
+    // Если файл не существует, отправляем простую страницу
+    res.send('Сервер DrillFlow работает. <a href="/api">API информация</a>');
+  }
 });
 
-// Для локального запуска
+// Запуск сервера
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Сервер запущен на порту ${port}`);
   });
 }
 
-// Экспорт для Vercel
+// Для Vercel
 module.exports = app; 
