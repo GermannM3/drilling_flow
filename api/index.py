@@ -6,9 +6,12 @@ import os
 # Устанавливаем флаг, что мы в среде Vercel
 os.environ['VERCEL'] = 'True'
 
+from fastapi import FastAPI
 from app.core.application import create_app
 
+# Создаем экземпляр приложения
 app = create_app()
 
 # Экспортируем приложение как handler для Vercel
+# Важно: handler должен быть экземпляром FastAPI, а не функцией
 handler = app 
