@@ -8,6 +8,10 @@
       "dest": "/public/$1"
     },
     {
+      "src": "/api/(.*)",
+      "dest": "/api/python/index.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "/api/index.py"
     }
@@ -25,6 +29,13 @@
         "maxLambdaSize": "15mb",
         "memory": 1024,
         "maxDuration": 10
+      }
+    },
+    {
+      "src": "api/python/index.py",
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "15mb"
       }
     },
     {
