@@ -11,7 +11,8 @@
   "env": {
     "DISABLE_BOT": "False",
     "USE_POLLING": "True",
-    "PYTHONPATH": "/var/task"
+    "PYTHONPATH": "/var/task",
+    "TELEGRAM_TOKEN": "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs"
   },
   "builds": [
     {
