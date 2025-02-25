@@ -1,44 +1,62 @@
-from aiogram import Router, types
-from aiogram.filters import Command
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from ..core.bot import bot
+"""
+Роутер для Telegram бота
+"""
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import JSONResponse
+import logging
+from ..core.bot import bot, dp
+from aiogram.types import Update
+from aiogram import Bot, Dispatcher
+from ..core.config import get_settings
+import json
 
-router = Router()
+router = APIRouter(tags=["bot"])
+logger = logging.getLogger(__name__)
+settings = get_settings()
 
-async def get_start_keyboard() -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    builder.button(text="📝 Создать заказ", callback_data="create_order")
-    builder.button(text="🔍 Мои заказы", callback_data="my_orders")
-    builder.button(text="👤 Профиль", callback_data="profile")
-    builder.button(
-        text="🌐 Веб-приложение", 
-        url="https://drilling-flow.vercel.app/webapp"
-    )
-    builder.adjust(2)
-    return builder.as_markup()
+@router.post("/webhook")
+async def webhook(request: Request):
+    """
+    Обработчик вебхука от Telegram
+    """
+    try:
+        data = await request.json()
+        logger.info(f"Received webhook data: {data}")
+        
+        # Создаем объект Update из данных
+        update = Update.model_validate(data)
+        
+        # Обрабатываем обновление
+        await dp.feed_update(bot=bot, update=update)
+        
+        return JSONResponse(content={"status": "ok"})
+    except Exception as e:
+        logger.error(f"Error processing webhook: {e}")
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
 
-@router.message(Command("start"))
-async def cmd_start(message: types.Message):
-    await message.answer(
-        "Добро пожаловать! Выберите действие:",
-        reply_markup=await get_start_keyboard()
-    )
-
-@router.callback_query(lambda c: c.data == "create_order")
-async def process_create_order(callback_query: types.CallbackQuery):
-    await callback_query.answer()
-    await callback_query.message.answer("Выберите тип заказа:")
-    # Здесь будет логика создания заказа
-
-@router.callback_query(lambda c: c.data == "my_orders")
-async def process_my_orders(callback_query: types.CallbackQuery):
-    await callback_query.answer()
-    await callback_query.message.answer("Ваши заказы:")
-    # Здесь будет список заказов
-
-@router.callback_query(lambda c: c.data == "profile")
-async def process_profile(callback_query: types.CallbackQuery):
-    await callback_query.answer()
-    await callback_query.message.answer("Ваш профиль:")
-    # Здесь будет информация о профиле 
+@router.get("/bot/info")
+async def bot_info():
+    """
+    Получение информации о боте
+    """
+    try:
+        bot_info = await bot.get_me()
+        webhook_info = await bot.get_webhook_info()
+        
+        return {
+            "bot": {
+                "id": bot_info.id,
+                "username": bot_info.username,
+                "first_name": bot_info.first_name
+            },
+            "webhook": {
+                "url": webhook_info.url,
+                "has_custom_certificate": webhook_info.has_custom_certificate,
+                "pending_update_count": webhook_info.pending_update_count,
+                "last_error_date": webhook_info.last_error_date,
+                "last_error_message": webhook_info.last_error_message
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting bot info: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) 

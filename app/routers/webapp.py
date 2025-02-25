@@ -49,19 +49,147 @@ def check_telegram_auth(auth_data):
     return hash_string == check_hash
 
 @router.get("/", response_class=HTMLResponse)
-async def index(
-    request: Request,
-    db: AsyncSession = Depends(get_db)
-):
+async def index(request: Request, db: AsyncSession = Depends(get_db)):
     """Главная страница"""
-    # Получаем топ подрядчиков по рейтингу
-    top_contractors = await get_contractor_rating(db, limit=5)
-    
+    try:
+        # Получаем статистику
+        contractors_count = await db.execute("SELECT COUNT(*) FROM contractors")
+        contractors_count = contractors_count.scalar() or 0
+        
+        orders_completed = await db.execute("SELECT COUNT(*) FROM orders WHERE status = 'completed'")
+        orders_completed = orders_completed.scalar() or 0
+        
+        orders_pending = await db.execute("SELECT COUNT(*) FROM orders WHERE status = 'new'")
+        orders_pending = orders_pending.scalar() or 0
+        
+        avg_rating = await db.execute("SELECT AVG(rating) FROM contractors")
+        avg_rating = round(avg_rating.scalar() or 0, 1)
+        
+        # Получаем последние заказы
+        latest_orders = await db.execute(
+            "SELECT id, title, location, status FROM orders ORDER BY created_at DESC LIMIT 5"
+        )
+        latest_orders = latest_orders.fetchall()
+        
+        # Получаем лучших подрядчиков
+        top_contractors = await db.execute(
+            "SELECT c.id, u.full_name, c.rating FROM contractors c "
+            "JOIN users u ON c.user_id = u.id "
+            "ORDER BY c.rating DESC LIMIT 5"
+        )
+        top_contractors = top_contractors.fetchall()
+        
+        return templates.TemplateResponse(
+            "index.html", 
+            {
+                "request": request,
+                "contractors_count": contractors_count,
+                "orders_completed": orders_completed,
+                "orders_pending": orders_pending,
+                "avg_rating": avg_rating,
+                "latest_orders": latest_orders,
+                "top_contractors": top_contractors
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error rendering index page: {e}")
+        # В случае ошибки отображаем страницу без данных из БД
+        return templates.TemplateResponse("index.html", {"request": request})
+
+@router.get("/orders", response_class=HTMLResponse)
+async def orders_page(request: Request, db: AsyncSession = Depends(get_db)):
+    """Страница заказов"""
+    try:
+        # Получаем все заказы
+        orders = await db.execute(
+            "SELECT id, title, location, status, created_at FROM orders ORDER BY created_at DESC"
+        )
+        orders = orders.fetchall()
+        
+        return templates.TemplateResponse(
+            "orders.html", 
+            {
+                "request": request,
+                "orders": orders
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error rendering orders page: {e}")
+        # В случае ошибки отображаем страницу с заглушкой
+        return templates.TemplateResponse("orders.html", {"request": request})
+
+@router.get("/orders/{order_id}", response_class=HTMLResponse)
+async def order_detail(order_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    """Детальная страница заказа"""
+    try:
+        # Получаем заказ по ID
+        order = await db.execute(
+            "SELECT id, title, description, location, status, created_at FROM orders WHERE id = :order_id",
+            {"order_id": order_id}
+        )
+        order = order.fetchone()
+        
+        if not order:
+            # Если заказ не найден, возвращаем 404
+            return templates.TemplateResponse(
+                "404.html", 
+                {"request": request, "message": f"Заказ с ID {order_id} не найден"},
+                status_code=404
+            )
+        
+        return templates.TemplateResponse(
+            "order_detail.html", 
+            {
+                "request": request,
+                "order": order
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error rendering order detail page: {e}")
+        # В случае ошибки отображаем страницу с заглушкой
+        return templates.TemplateResponse("order_detail.html", {"request": request})
+
+@router.get("/contractors", response_class=HTMLResponse)
+async def contractors_page(request: Request, db: AsyncSession = Depends(get_db)):
+    """Страница подрядчиков"""
+    try:
+        # Получаем всех подрядчиков
+        contractors = await db.execute(
+            "SELECT c.id, u.full_name, c.rating, c.orders_completed "
+            "FROM contractors c JOIN users u ON c.user_id = u.id "
+            "ORDER BY c.rating DESC"
+        )
+        contractors = contractors.fetchall()
+        
+        return templates.TemplateResponse(
+            "contractors.html", 
+            {
+                "request": request,
+                "contractors": contractors
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error rendering contractors page: {e}")
+        # В случае ошибки отображаем страницу с заглушкой
+        return templates.TemplateResponse("contractors.html", {"request": request})
+
+@router.get("/about", response_class=HTMLResponse)
+async def about_page(request: Request):
+    """Страница о нас"""
     return templates.TemplateResponse(
-        "index.html",
+        "about.html", 
         {
             "request": request,
-            "contractors": top_contractors
+            "app_name": "DrillFlow",
+            "version": "1.0.0",
+            "legal": {
+                "maps_terms": "https://yandex.ru/legal/maps_api/",
+                "maps_attribution": "© Яндекс Карты",
+            },
+            "contacts": {
+                "email": "support@drillflow.ru",
+                "telegram": "https://t.me/drillflow_bot"
+            }
         }
     )
 
@@ -75,21 +203,6 @@ async def telegram_auth(request: Request):
     except Exception as e:
         logger.error(f"Auth error: {e}")
         return JSONResponse({"success": False, "error": str(e)})
-
-@router.get("/about")
-async def get_about():
-    return JSONResponse({
-        "app_name": "DrillFlow",
-        "version": "1.0.0",
-        "legal": {
-            "maps_terms": "https://yandex.ru/legal/maps_api/",
-            "maps_attribution": "© Яндекс Карты",
-        },
-        "contacts": {
-            "email": "support@drillflow.ru",
-            "telegram": "https://t.me/drillflow_bot"
-        }
-    })
 
 @router.post("/webhook")
 async def webhook(update: dict):
@@ -133,40 +246,6 @@ async def create_order(
         logger.error(f"Error creating order: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/orders")
-async def get_orders(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Получение списка заказов"""
-    orders = db.query(Order).filter(
-        Order.client_id == current_user.id
-    ).all()
-    return {"orders": [order.__dict__ for order in orders]}
-
-@router.get("/api/orders/active")
-async def get_active_orders(db: Session = Depends(get_db)):
-    """Получение активных заказов"""
-    active_orders = db.query(Order).filter(
-        Order.status == OrderStatus.NEW
-    ).all()
-    return JSONResponse([{
-        "id": order.id,
-        "title": order.description,
-        "location": order.address
-    } for order in active_orders])
-
-@router.get("/webapp", response_class=HTMLResponse)
-async def webapp(request: Request):
-    """Веб-приложение для Telegram"""
-    return templates.TemplateResponse(
-        "webapp.html",
-        {
-            "request": request,
-            "page": "webapp"
-        }
-    )
-
 @router.get("/api/orders")
 async def get_orders():
     """API для получения заказов"""
@@ -179,4 +258,15 @@ async def get_orders():
             ]
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/webapp", response_class=HTMLResponse)
+async def webapp(request: Request):
+    """Веб-приложение для Telegram"""
+    return templates.TemplateResponse(
+        "webapp.html",
+        {
+            "request": request,
+            "page": "webapp"
+        }
+    ) 

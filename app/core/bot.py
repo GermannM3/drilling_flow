@@ -12,8 +12,10 @@ from aiogram.enums.parse_mode import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from ..core.config import get_settings
 import asyncio
+import logging
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 # Создаем роутер
 router = Router()
@@ -37,13 +39,23 @@ dp.bot = bot
 
 async def setup_bot_commands():
     """Установка команд бота"""
-    commands = [
-        BotCommand(command="start", description="Начать работу"),
-        BotCommand(command="help", description="Помощь"),
-        BotCommand(command="orders", description="Мои заказы"),
-        BotCommand(command="profile", description="Мой профиль")
-    ]
-    await bot.set_my_commands(commands)
+    try:
+        commands = [
+            BotCommand(command="start", description="Начать работу"),
+            BotCommand(command="help", description="Помощь"),
+            BotCommand(command="orders", description="Мои заказы"),
+            BotCommand(command="profile", description="Мой профиль")
+        ]
+        await bot.set_my_commands(commands)
+        logger.info("Bot commands set up successfully")
+        
+        # Настраиваем вебхук, если указан домен
+        if settings.TELEGRAM_BOT_DOMAIN:
+            webhook_url = f"https://{settings.TELEGRAM_BOT_DOMAIN}/webhook"
+            await bot.set_webhook(webhook_url)
+            logger.info(f"Webhook set to {webhook_url}")
+    except Exception as e:
+        logger.error(f"Error setting up bot commands: {e}")
 
 # Создаем клавиатуру с веб-приложением
 webapp_keyboard = ReplyKeyboardMarkup(
@@ -61,12 +73,16 @@ webapp_keyboard = ReplyKeyboardMarkup(
 @router.message(Command("start"))
 async def start_command(message: Message):
     """Обработчик команды /start"""
-    await message.answer(
-        "Добро пожаловать в DrillFlow! 🚀\n\n"
-        "Я помогу вам управлять буровыми работами.\n"
-        "Используйте кнопки ниже для навигации:",
-        reply_markup=webapp_keyboard
-    )
+    try:
+        await message.answer(
+            "Добро пожаловать в DrillFlow! 🚀\n\n"
+            "Я помогу вам управлять буровыми работами.\n"
+            "Используйте кнопки ниже для навигации:",
+            reply_markup=webapp_keyboard
+        )
+        logger.info(f"Start command processed for user {message.from_user.id}")
+    except Exception as e:
+        logger.error(f"Error processing start command: {e}")
 
 @router.message(Command("help"))
 async def help_command(message: Message):
@@ -110,12 +126,12 @@ async def statistics(message):
 async def new_order(message):
     await message.answer(
         "Создайте новый заказ через веб-интерфейс:",
-        reply_markup=InlineKeyboardMarkup().add(
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
             InlineKeyboardButton(
-                "Открыть веб-приложение",
-                web_app=WebAppInfo(url="https://drilling-flow.vercel.app")
+                text="Открыть веб-приложение",
+                web_app=WebAppInfo(url=f"https://{settings.TELEGRAM_BOT_DOMAIN}")
             )
-        )
+        ]])
     )
 
 @router.message(lambda m: m.text == "👥 Подрядчики")

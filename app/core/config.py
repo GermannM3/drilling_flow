@@ -43,6 +43,11 @@ class Settings(BaseSettings):
         """Получение URL базы данных"""
         if self.TESTING:
             return "sqlite:///./test.db"
+        
+        # Если указаны параметры PostgreSQL, формируем URL
+        if self.POSTGRES_SERVER and self.POSTGRES_USER and self.POSTGRES_PASSWORD and self.POSTGRES_DB:
+            return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+        
         return self.DATABASE_URL
     
     # Redis
@@ -67,7 +72,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_SECOND: int = 100
     
     # Telegram
-    TELEGRAM_TOKEN: str = ""
+    TELEGRAM_TOKEN: str = "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs"
     BOT_WEBHOOK_URL: Optional[str] = None
     BOT_WEBHOOK_DOMAIN: Optional[str] = None
     BOT_ADMIN_GROUP_ID: Optional[int] = None
@@ -75,11 +80,11 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_DOMAIN: str = "https://drilling-flow.vercel.app"
     
     # CORS и хосты
-    ALLOWED_HOSTS: str = "localhost,127.0.0.1"
+    ALLOWED_HOSTS: str = "localhost,127.0.0.1,drilling-flow.vercel.app"
     CORS_ORIGINS: str = "*"
     
     # API ключи
-    YANDEX_API_KEY: Optional[str] = None
+    YANDEX_API_KEY: Optional[str] = "fa6c1c44-4070-4d63-819b-bd6fbb5bae9e"
     SUPABASE_URL: Optional[str] = None
     SUPABASE_KEY: Optional[str] = None
     

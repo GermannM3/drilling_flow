@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}О нас{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-emerald-900 flex items-center justify-center p-4 sm:p-8">
+    <div class="w-full max-w-[1200px] bg-gradient-to-br from-gray-800/95 via-blue-900/90 to-emerald-900/90 backdrop-blur-md rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.5)] p-4 sm:p-8 border-2 sm:border-4 border-white/10">
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+            <div class="flex items-center gap-4 group">
+                <span class="material-symbols-outlined text-4xl sm:text-5xl text-blue-400 transform group-hover:rotate-180 transition-all duration-500 shadow-lg shadow-blue-500/50">water_drop</span>
+                <h1 class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">DrillFlow</h1>
+            </div>
+            <nav>
+                <ul class="flex space-x-4">
+                    <li><a href="/" class="text-blue-300 hover:text-emerald-300 transition-all duration-300">Главная</a></li>
+                    <li><a href="/orders" class="text-blue-300 hover:text-emerald-300 transition-all duration-300">Заказы</a></li>
+                    <li><a href="/contractors" class="text-blue-300 hover:text-emerald-300 transition-all duration-300">Подрядчики</a></li>
+                    <li><a href="/about" class="text-emerald-300 hover:text-emerald-300 transition-all duration-300">О нас</a></li>
+                </ul>
+            </nav>
+            <div class="flex items-center gap-4">
+                <details class="relative">
+                    <summary class="flex items-center gap-2 cursor-pointer hover:bg-blue-500/20 p-2 rounded-xl transition-all duration-300 hover:scale-105">
+                        <span class="material-symbols-outlined text-blue-400 animate-pulse">notifications</span>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-bounce shadow-lg shadow-red-500/50">3</span>
+                    </summary>
+                    <div class="absolute right-0 mt-2 w-72 bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 z-10 border-2 border-blue-500/20">
+                        <div class="flex flex-col gap-2">
+                            <div class="p-3 hover:bg-blue-500/20 rounded-xl transition-all duration-300 text-blue-300 cursor-pointer transform hover:scale-102">
+                                <p class="font-bold text-lg">Новый Заказ #1234</p>
+                                <p class="text-sm text-blue-400/90">Запрос на бурение скважины - 5км</p>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+                <details class="relative">
+                    <summary class="flex items-center gap-2 cursor-pointer hover:bg-blue-500/20 p-2 rounded-xl transition-all duration-300 hover:scale-105 text-blue-300">
+                        <span class="material-symbols-outlined text-2xl">account_circle</span>
+                        <span class="font-semibold">Пользователь</span>
+                    </summary>
+                </details>
+            </div>
+        </header>
+
+        <div class="bg-gradient-to-br from-gray-800/90 via-blue-900/90 to-emerald-900/90 backdrop-blur-md rounded-2xl border-2 border-blue-500/20 p-6 mb-8">
+            <h2 class="text-2xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">О проекте DrillFlow</h2>
+            
+            <div class="text-blue-300 space-y-6">
+                <p>
+                    <span class="font-bold">DrillFlow</span> — это инновационная платформа, которая соединяет клиентов, нуждающихся в услугах бурения скважин, с профессиональными подрядчиками. Наша миссия — сделать процесс заказа и выполнения буровых работ максимально простым, прозрачным и эффективным.
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    <div class="bg-gradient-to-br from-blue-900/30 to-blue-900/10 backdrop-blur-md p-6 rounded-2xl border-2 border-blue-500/20 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300">
+                        <span class="material-symbols-outlined text-4xl text-blue-400 mb-4">verified</span>
+                        <h3 class="text-xl font-bold mb-2 text-blue-300">Проверенные подрядчики</h3>
+                        <p class="text-blue-400/90">Мы тщательно отбираем и проверяем всех подрядчиков, чтобы гарантировать высокое качество услуг.</p>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-blue-900/30 to-blue-900/10 backdrop-blur-md p-6 rounded-2xl border-2 border-blue-500/20 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300">
+                        <span class="material-symbols-outlined text-4xl text-blue-400 mb-4">support_agent</span>
+                        <h3 class="text-xl font-bold mb-2 text-blue-300">Поддержка 24/7</h3>
+                        <p class="text-blue-400/90">Наша команда поддержки всегда готова помочь вам с любыми вопросами и проблемами.</p>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-blue-900/30 to-blue-900/10 backdrop-blur-md p-6 rounded-2xl border-2 border-blue-500/20 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300">
+                        <span class="material-symbols-outlined text-4xl text-blue-400 mb-4">security</span>
+                        <h3 class="text-xl font-bold mb-2 text-blue-300">Безопасные платежи</h3>
+                        <p class="text-blue-400/90">Мы обеспечиваем безопасность всех транзакций и защиту ваших персональных данных.</p>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="text-xl font-bold mb-4 text-blue-300">Контактная информация</h3>
+                    <div class="space-y-2">
+                        <p class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-400">mail</span>
+                            <span>{{ contacts.email }}</span>
+                        </p>
+                        <p class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-400">send</span>
+                            <a href="{{ contacts.telegram }}" class="hover:text-emerald-300 transition-all duration-300">Telegram бот</a>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-sm text-blue-400/70">
+                    <p>Версия приложения: {{ version }}</p>
+                    <p>{{ legal.maps_attribution }}</p>
+                    <p><a href="{{ legal.maps_terms }}" class="hover:text-emerald-300 transition-all duration-300">Условия использования карт</a></p>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="mt-8 p-4 text-center text-blue-300/70">
+            <p>© 2025 DrillFlow. Все права защищены.</p>
+        </footer>
+    </div>
+</div>
+{% endblock %} 

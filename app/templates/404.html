@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Страница не найдена{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-emerald-900 flex items-center justify-center p-4 sm:p-8">
+    <div class="w-full max-w-[800px] bg-gradient-to-br from-gray-800/95 via-blue-900/90 to-emerald-900/90 backdrop-blur-md rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.5)] p-4 sm:p-8 border-2 sm:border-4 border-white/10">
+        <div class="flex flex-col items-center justify-center text-center">
+            <span class="material-symbols-outlined text-8xl text-blue-400 mb-6 animate-pulse">error</span>
+            <h1 class="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-4">404</h1>
+            <h2 class="text-2xl font-bold text-blue-300 mb-6">Страница не найдена</h2>
+            <p class="text-blue-400/90 mb-8">{{ message|default('Запрашиваемая страница не существует или была перемещена.') }}</p>
+            
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="/" class="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 border-2 border-blue-400/30 font-semibold shadow-lg hover:shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">home</span>
+                    На главную
+                </a>
+                <a href="/orders" class="bg-emerald-600 text-white px-8 py-3 rounded-xl hover:bg-emerald-700 transition-all duration-300 transform hover:scale-105 border-2 border-emerald-400/30 font-semibold shadow-lg hover:shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">list</span>
+                    Все заказы
+                </a>
+            </div>
+        </div>
+        
+        <footer class="mt-12 p-4 text-center text-blue-300/70">
+            <p>© 2025 DrillFlow. Все права защищены.</p>
+        </footer>
+    </div>
+</div>
+{% endblock %}
