@@ -305,42 +305,19 @@ async def webapp(request: Request):
         }
     )
 
-@router.get("/error", response_class=HTMLResponse)
-async def error_page(request: Request, code: int = 500, message: str = None):
-    """Страница ошибки"""
+@router.get("/error/{error_code}", response_class=HTMLResponse)
+async def error_page(
+    request: Request, 
+    error_code: int = 500, 
+    error_message: str = "Внутренняя ошибка сервера"
+):
+    """Страница ошибки с настраиваемым кодом"""
     return templates.TemplateResponse(
-        "error.html", 
+        "error.html",
         {
             "request": request,
-            "error_code": code,
-            "error_message": message
-        }
-    )
-
-@router.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    """Обработчик HTTP-исключений"""
-    logger.error(f"HTTP error: {exc.status_code} - {exc.detail}")
-    return templates.TemplateResponse(
-        "error.html", 
-        {
-            "request": request,
-            "error_code": exc.status_code,
-            "error_message": exc.detail
+            "error_code": error_code,
+            "error_message": error_message
         },
-        status_code=exc.status_code
-    )
-
-@router.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    """Обработчик общих исключений"""
-    logger.error(f"Unhandled exception: {str(exc)}")
-    return templates.TemplateResponse(
-        "error.html", 
-        {
-            "request": request,
-            "error_code": 500,
-            "error_message": "Внутренняя ошибка сервера"
-        },
-        status_code=500
+        status_code=error_code
     ) 

@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.templating import Jinja2Templates
 from .logger import setup_logging
 from .config import get_settings
 from app.routers import auth, orders, contractors, geo, webapp
@@ -31,6 +32,9 @@ def create_app() -> FastAPI:
         description="API для сервиса бурения скважин"
     )
 
+    # Настройка шаблонов
+    templates = Jinja2Templates(directory="app/templates")
+
     # Настройка CORS
     app.add_middleware(
         CORSMiddleware,
@@ -39,6 +43,74 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Добавляем обработчики исключений на уровне приложения
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException):
+        """Обработчик HTTP-исключений"""
+        logger.error(f"HTTP error: {exc.status_code} - {exc.detail}")
+        
+        # Проверяем, запрос к API или к веб-интерфейсу
+        if request.url.path.startswith("/api/"):
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": exc.detail}
+            )
+        else:
+            # Для веб-интерфейса перенаправляем на страницу ошибки
+            return templates.TemplateResponse(
+                "error.html", 
+                {
+                    "request": request,
+                    "error_code": exc.status_code,
+                    "error_message": exc.detail
+                },
+                status_code=exc.status_code
+            )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        """Обработчик ошибок валидации"""
+        error_detail = str(exc)
+        logger.error(f"Validation error: {error_detail}")
+        
+        if request.url.path.startswith("/api/"):
+            return JSONResponse(
+                status_code=422,
+                content={"detail": "Ошибка валидации данных", "errors": exc.errors()}
+            )
+        else:
+            return templates.TemplateResponse(
+                "error.html", 
+                {
+                    "request": request,
+                    "error_code": 422,
+                    "error_message": "Ошибка в переданных данных"
+                },
+                status_code=422
+            )
+
+    @app.exception_handler(Exception)
+    async def general_exception_handler(request: Request, exc: Exception):
+        """Обработчик общих исключений"""
+        logger.error(f"Unhandled exception: {str(exc)}")
+        logger.error(traceback.format_exc())
+        
+        if request.url.path.startswith("/api/"):
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Внутренняя ошибка сервера"}
+            )
+        else:
+            return templates.TemplateResponse(
+                "error.html", 
+                {
+                    "request": request,
+                    "error_code": 500,
+                    "error_message": "Внутренняя ошибка сервера"
+                },
+                status_code=500
+            )
 
     # Проверяем и создаем директории для статических файлов только если не в среде Vercel
     if not IS_VERCEL:
@@ -86,63 +158,5 @@ def create_app() -> FastAPI:
     @app.get("/health")
     def health_check():
         return {"status": "ok"}
-        
-    @app.exception_handler(HTTPException)
-    async def http_exception_handler(request: Request, exc: HTTPException):
-        """Обработчик HTTP-исключений"""
-        logger.error(f"HTTP error: {exc.status_code} - {exc.detail}")
-        
-        # Для API-запросов возвращаем JSON
-        if request.url.path.startswith('/api'):
-            return JSONResponse(
-                status_code=exc.status_code,
-                content={"error": exc.detail}
-            )
-        
-        # Для веб-запросов перенаправляем на страницу ошибки
-        return JSONResponse(
-            status_code=307,  # Temporary Redirect
-            headers={"Location": f"/error?code={exc.status_code}&message={exc.detail}"},
-            content={"redirect": True}
-        )
-    
-    @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(request: Request, exc: RequestValidationError):
-        """Обработчик ошибок валидации запросов"""
-        logger.error(f"Validation error: {str(exc)}")
-        
-        # Для API-запросов возвращаем JSON с деталями ошибок
-        if request.url.path.startswith('/api'):
-            return JSONResponse(
-                status_code=422,
-                content={"error": "Ошибка валидации данных", "details": exc.errors()}
-            )
-        
-        # Для веб-запросов перенаправляем на страницу ошибки
-        return JSONResponse(
-            status_code=307,  # Temporary Redirect
-            headers={"Location": "/error?code=422&message=Ошибка валидации данных"},
-            content={"redirect": True}
-        )
-    
-    @app.exception_handler(Exception)
-    async def general_exception_handler(request: Request, exc: Exception):
-        """Обработчик общих исключений"""
-        logger.error(f"Unhandled exception: {str(exc)}")
-        logger.error(traceback.format_exc())
-        
-        # Для API-запросов возвращаем JSON
-        if request.url.path.startswith('/api'):
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Внутренняя ошибка сервера"}
-            )
-        
-        # Для веб-запросов перенаправляем на страницу ошибки
-        return JSONResponse(
-            status_code=307,  # Temporary Redirect
-            headers={"Location": "/error?code=500&message=Внутренняя ошибка сервера"},
-            content={"redirect": True}
-        )
 
     return app 
