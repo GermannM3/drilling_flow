@@ -7,12 +7,19 @@
     <link rel="stylesheet" href="{{ url_for('static', path='webapp/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <style>
+        body {
+            line-height: inherit;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #111827, #1e3a8a, #064e3b);
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <div id="webcrumbs">
-        {% block content %}{% endblock %}
-    </div>
+    {% block content %}{% endblock %}
     
     <script src="{{ url_for('static', path='webapp/script.js') }}"></script>
     {% block extra_js %}{% endblock %}
