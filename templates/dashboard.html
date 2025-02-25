@@ -1,18 +1,54 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Дашборд DrillFlow</title>
-    <script src="{% static 'dashboard.js' %}"></script>
-</head>
-<body>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Дашборд DrillFlow{% endblock %}
+
+{% block content %}
+<div class="dashboard">
     <h1>Статистика заказов</h1>
-    <div id="orders-count">Всего заказов: {{ orders_count }}</div>
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-title">Всего заказов</div>
+            <div class="stat-number">{{ orders_count|default:"0" }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Активные заказы</div>
+            <div class="stat-number">{{ active_orders|default:"0" }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Завершенные заказы</div>
+            <div class="stat-number">{{ completed_orders|default:"0" }}</div>
+        </div>
+    </div>
+
     <h2>Топ-10 подрядчиков</h2>
-    <ul id="top-contractors">
-        {% for contractor in top_contractors %}
-            <li>{{ contractor.user.username }} — рейтинг: {{ contractor.rating }}</li>
-        {% endfor %}
-    </ul>
-</body>
-</html> 
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Имя</th>
+                    <th>Рейтинг</th>
+                    <th>Выполнено заказов</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contractor in top_contractors %}
+                <tr>
+                    <td>{{ contractor.user.username }}</td>
+                    <td>{{ contractor.rating }}</td>
+                    <td>{{ contractor.completed_orders }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">Нет данных о подрядчиках</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %} 

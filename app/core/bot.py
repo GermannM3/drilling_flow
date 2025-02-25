@@ -13,6 +13,7 @@ from aiogram.client.default import DefaultBotProperties
 from ..core.config import get_settings
 import asyncio
 import logging
+from sqlalchemy.ext.asyncio import AsyncSession
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -20,8 +21,11 @@ logger = logging.getLogger(__name__)
 # Создаем роутер
 router = Router()
 
-# Создаем бота только если не в режиме тестирования
-if not settings.TESTING:
+# Флаг для отслеживания запуска бота
+bot_is_running = False
+
+# Создаем бота только если не в режиме тестирования и не отключен
+if not settings.TESTING and not settings.DISABLE_BOT:
     bot = Bot(
         token=settings.TELEGRAM_TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)
@@ -29,7 +33,7 @@ if not settings.TESTING:
     dp = Dispatcher()
 else:
     from unittest.mock import AsyncMock, MagicMock
-    # В тестах используем моки
+    # В тестах или при отключенном боте используем моки
     bot = MagicMock()
     bot.send_message = AsyncMock()
     dp = MagicMock()
@@ -39,6 +43,11 @@ dp.bot = bot
 
 async def setup_bot_commands():
     """Установка команд бота"""
+    # Если бот отключен, не выполняем настройку
+    if settings.DISABLE_BOT:
+        logger.info("Bot is disabled, skipping setup_bot_commands")
+        return
+        
     try:
         commands = [
             BotCommand(command="start", description="Начать работу"),
@@ -73,7 +82,7 @@ webapp_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(
             text="🌐 Открыть DrillFlow",
-            web_app=WebAppInfo(url=f"https://{settings.TELEGRAM_BOT_DOMAIN}")
+            web_app=WebAppInfo(url=f"{settings.TELEGRAM_BOT_DOMAIN}")
         )],
         [KeyboardButton(text="📊 Статистика"), KeyboardButton(text="📝 Новый заказ")],
         [KeyboardButton(text="👥 Подрядчики"), KeyboardButton(text="⭐️ Рейтинг")]
@@ -100,7 +109,7 @@ async def start_command(message: Message):
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
                     text="🌐 Открыть веб-приложение",
-                    web_app=WebAppInfo(url=f"https://{settings.TELEGRAM_BOT_DOMAIN}")
+                    web_app=WebAppInfo(url=f"{settings.TELEGRAM_BOT_DOMAIN}")
                 )
             ]])
         )
@@ -209,15 +218,31 @@ dp.include_router(router)
 # Функция для запуска поллинга бота
 async def start_polling():
     """Запуск поллинга бота"""
+    global bot_is_running
+    
+    # Проверяем, отключен ли бот в настройках
+    if settings.DISABLE_BOT:
+        logger.info("Bot is disabled in settings, skipping start_polling")
+        return
+    
+    # Проверяем, не запущен ли уже бот
+    if bot_is_running:
+        logger.info("Bot is already running, skipping start_polling")
+        return
+        
     try:
         # Сбрасываем вебхук, если он был установлен
         await bot.delete_webhook(drop_pending_updates=True)
         logger.info("Starting bot polling")
         
+        # Устанавливаем флаг запуска
+        bot_is_running = True
+        
         # Запускаем поллинг
         await dp.start_polling(bot)
     except Exception as e:
         logger.error(f"Error starting polling: {e}")
+        bot_is_running = False
         raise
 
 # Экспортируем для использования в других модулях
@@ -227,6 +252,11 @@ __all__ = ["bot", "dp", "router"]
 
 async def setup_webhook():
     """Настройка вебхука"""
+    # Если бот отключен, не выполняем настройку
+    if settings.DISABLE_BOT:
+        logger.info("Bot is disabled, skipping setup_webhook")
+        return
+        
     if settings.BOT_WEBHOOK_URL:
         await bot.set_webhook(settings.BOT_WEBHOOK_URL)
         print(f"Webhook set to {settings.BOT_WEBHOOK_URL}") 

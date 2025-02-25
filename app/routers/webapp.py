@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from ..core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.rating import get_contractor_rating
+from sqlalchemy import text
 
 router = APIRouter(tags=["webapp"])
 logger = logging.getLogger(__name__)
@@ -53,29 +54,29 @@ async def index(request: Request, db: AsyncSession = Depends(get_db)):
     """Главная страница"""
     try:
         # Получаем статистику
-        contractors_count = await db.execute("SELECT COUNT(*) FROM contractors")
+        contractors_count = await db.execute(text("SELECT COUNT(*) FROM contractors"))
         contractors_count = contractors_count.scalar() or 0
         
-        orders_completed = await db.execute("SELECT COUNT(*) FROM orders WHERE status = 'completed'")
+        orders_completed = await db.execute(text("SELECT COUNT(*) FROM orders WHERE status = 'completed'"))
         orders_completed = orders_completed.scalar() or 0
         
-        orders_pending = await db.execute("SELECT COUNT(*) FROM orders WHERE status = 'new'")
+        orders_pending = await db.execute(text("SELECT COUNT(*) FROM orders WHERE status = 'new'"))
         orders_pending = orders_pending.scalar() or 0
         
-        avg_rating = await db.execute("SELECT AVG(rating) FROM contractors")
+        avg_rating = await db.execute(text("SELECT AVG(rating) FROM contractors"))
         avg_rating = round(avg_rating.scalar() or 0, 1)
         
         # Получаем последние заказы
         latest_orders = await db.execute(
-            "SELECT id, title, location, status FROM orders ORDER BY created_at DESC LIMIT 5"
+            text("SELECT id, title, location, status FROM orders ORDER BY created_at DESC LIMIT 5")
         )
         latest_orders = latest_orders.fetchall()
         
         # Получаем лучших подрядчиков
         top_contractors = await db.execute(
-            "SELECT c.id, u.full_name, c.rating FROM contractors c "
-            "JOIN users u ON c.user_id = u.id "
-            "ORDER BY c.rating DESC LIMIT 5"
+            text("SELECT c.id, u.full_name, c.rating FROM contractors c "
+                "JOIN users u ON c.user_id = u.id "
+                "ORDER BY c.rating DESC LIMIT 5")
         )
         top_contractors = top_contractors.fetchall()
         
@@ -102,7 +103,7 @@ async def orders_page(request: Request, db: AsyncSession = Depends(get_db)):
     try:
         # Получаем все заказы
         orders = await db.execute(
-            "SELECT id, title, location, status, created_at FROM orders ORDER BY created_at DESC"
+            text("SELECT id, title, location, status, created_at FROM orders ORDER BY created_at DESC")
         )
         orders = orders.fetchall()
         
@@ -124,7 +125,7 @@ async def order_detail(order_id: int, request: Request, db: AsyncSession = Depen
     try:
         # Получаем заказ по ID
         order = await db.execute(
-            "SELECT id, title, description, location, status, created_at FROM orders WHERE id = :order_id",
+            text("SELECT id, title, description, location, status, created_at FROM orders WHERE id = :order_id"),
             {"order_id": order_id}
         )
         order = order.fetchone()
@@ -155,9 +156,9 @@ async def contractors_page(request: Request, db: AsyncSession = Depends(get_db))
     try:
         # Получаем всех подрядчиков
         contractors = await db.execute(
-            "SELECT c.id, u.full_name, c.rating, c.orders_completed "
-            "FROM contractors c JOIN users u ON c.user_id = u.id "
-            "ORDER BY c.rating DESC"
+            text("SELECT c.id, u.full_name, c.rating, c.orders_completed "
+                "FROM contractors c JOIN users u ON c.user_id = u.id "
+                "ORDER BY c.rating DESC")
         )
         contractors = contractors.fetchall()
         
@@ -208,6 +209,11 @@ async def telegram_auth(request: Request):
 async def webhook(update: dict):
     """Обработчик вебхуков от Telegram"""
     try:
+        # Проверяем, не отключен ли бот
+        if settings.DISABLE_BOT:
+            logger.info("Bot is disabled, webhook request ignored")
+            return JSONResponse({"status": "bot_disabled"})
+            
         # Обрабатываем обновление
         await dp.feed_webhook_update(update)
         return JSONResponse({"status": "ok"})

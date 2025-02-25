@@ -77,8 +77,9 @@ class Settings(BaseSettings):
     BOT_WEBHOOK_DOMAIN: Optional[str] = None
     BOT_ADMIN_GROUP_ID: Optional[int] = None
     BOT_SUPPORT_GROUP_ID: Optional[int] = None
-    TELEGRAM_BOT_DOMAIN: str = "drilling-flow.vercel.app"
+    TELEGRAM_BOT_DOMAIN: str = "https://drilling-flow.vercel.app"
     USE_POLLING: bool = True  # Использовать поллинг вместо вебхука
+    DISABLE_BOT: bool = False  # Отключить бота полностью
     
     # CORS и хосты
     ALLOWED_HOSTS: str = "localhost,127.0.0.1,drilling-flow.vercel.app"
