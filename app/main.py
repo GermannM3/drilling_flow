@@ -7,11 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import configure_mappers
+import asyncio
 
 from app.core.config import get_settings
 from app.routers import router as api_router
 from app.core.init_db import init_db
-from app.core.bot import setup_bot_commands
+from app.core.bot import bot, dp, setup_bot_commands, start_polling
 from app.db.models import User, Order, OrderRating  # Явно импортируем модели
 
 settings = get_settings()
@@ -51,6 +52,14 @@ def create_app() -> FastAPI:
         """Действия при запуске приложения"""
         await init_db()
         await setup_bot_commands()
+        
+        # Запускаем поллинг бота в фоновом режиме
+        try:
+            # Запускаем поллинг в фоновом режиме
+            asyncio.create_task(start_polling())
+            print("Bot polling started successfully")
+        except Exception as e:
+            print(f"Error starting bot polling: {e}")
 
     @app.get("/health")
     async def health_check():

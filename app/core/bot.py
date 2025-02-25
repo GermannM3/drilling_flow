@@ -49,14 +49,22 @@ async def setup_bot_commands():
         await bot.set_my_commands(commands)
         logger.info("Bot commands set up successfully")
         
-        # Настраиваем вебхук, если указан домен
-        if settings.TELEGRAM_BOT_DOMAIN:
+        # Настраиваем вебхук или поллинг в зависимости от настроек
+        if settings.USE_POLLING:
+            # Если используем поллинг, сбрасываем вебхук
+            await bot.delete_webhook(drop_pending_updates=True)
+            logger.info("Webhook deleted, will use polling")
+        elif settings.TELEGRAM_BOT_DOMAIN:
+            # Если используем вебхук, настраиваем его
             webhook_url = f"https://{settings.TELEGRAM_BOT_DOMAIN}/api/webhook"
             try:
                 await bot.set_webhook(webhook_url)
                 logger.info(f"Webhook set to {webhook_url}")
             except Exception as e:
                 logger.error(f"Error setting webhook: {e}")
+                # Если не удалось установить вебхук, сбрасываем его и используем поллинг
+                await bot.delete_webhook(drop_pending_updates=True)
+                logger.info("Webhook deleted, will use polling instead")
     except Exception as e:
         logger.error(f"Error setting up bot commands: {e}")
 
@@ -78,15 +86,33 @@ webapp_keyboard = ReplyKeyboardMarkup(
 async def start_command(message: Message):
     """Обработчик команды /start"""
     try:
+        # Отправляем приветственное сообщение с клавиатурой
         await message.answer(
             "Добро пожаловать в DrillFlow! 🚀\n\n"
             "Я помогу вам управлять буровыми работами.\n"
             "Используйте кнопки ниже для навигации:",
             reply_markup=webapp_keyboard
         )
+        
+        # Отправляем дополнительное сообщение с инлайн-кнопкой для веб-приложения
+        await message.answer(
+            "Вы также можете открыть веб-приложение, нажав на кнопку ниже:",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(
+                    text="🌐 Открыть веб-приложение",
+                    web_app=WebAppInfo(url=f"https://{settings.TELEGRAM_BOT_DOMAIN}")
+                )
+            ]])
+        )
+        
         logger.info(f"Start command processed for user {message.from_user.id}")
     except Exception as e:
         logger.error(f"Error processing start command: {e}")
+        # Пробуем отправить сообщение без клавиатуры в случае ошибки
+        try:
+            await message.answer("Произошла ошибка при настройке бота. Пожалуйста, попробуйте позже или обратитесь в поддержку.")
+        except:
+            pass
 
 @router.message(Command("help"))
 async def help_command(message: Message):
@@ -161,9 +187,17 @@ async def rating(message):
 
 @router.message()
 async def handle_message(message):
+    """Обработчик всех остальных сообщений"""
     if message.web_app_data:
-        await message.answer(f"Получены данные: {message.web_app_data.data}")
+        # Если получены данные из веб-приложения
+        try:
+            data = message.web_app_data.data
+            await message.answer(f"Получены данные: {data}")
+        except Exception as e:
+            logger.error(f"Error processing web app data: {e}")
+            await message.answer("Произошла ошибка при обработке данных")
     else:
+        # Для всех остальных сообщений
         await message.answer(
             "Пожалуйста, используйте кнопки меню для навигации.",
             reply_markup=webapp_keyboard
@@ -171,6 +205,20 @@ async def handle_message(message):
 
 # Регистрируем роутер в диспетчере
 dp.include_router(router)
+
+# Функция для запуска поллинга бота
+async def start_polling():
+    """Запуск поллинга бота"""
+    try:
+        # Сбрасываем вебхук, если он был установлен
+        await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("Starting bot polling")
+        
+        # Запускаем поллинг
+        await dp.start_polling(bot)
+    except Exception as e:
+        logger.error(f"Error starting polling: {e}")
+        raise
 
 # Экспортируем для использования в других модулях
 __all__ = ["bot", "dp", "router"]
