@@ -16,17 +16,17 @@ async def init_db():
     import_models()
     
     # Пробуем применить миграции
-    try:
-        alembic_cfg = Config("alembic.ini")
-        command.upgrade(alembic_cfg, "head")
-    except Exception as e:
-        print(f"Migration error: {e}")
+    # try:
+    #     alembic_cfg = Config("alembic.ini")
+    #     command.upgrade(alembic_cfg, "head")
+    # except Exception as e:
+    #     print(f"Migration error: {e}")
         
-        # Если миграции не удались, пробуем создать таблицы напрямую
-        try:
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-        except sqlalchemy.exc.ProgrammingError as e:
-            if "already exists" not in str(e):
-                raise
-            print(f"Ignoring duplicate object error: {e}") 
+    # Если миграции не удались, пробуем создать таблицы напрямую
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except sqlalchemy.exc.ProgrammingError as e:
+        if "already exists" not in str(e):
+            raise
+        print(f"Ignoring duplicate object error: {e}") 

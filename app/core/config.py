@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     KEEPALIVE: int = 120
     
     # База данных
-    DATABASE_URL: str = "sqlite+aiosqlite:///./sql_app.db"
+    DATABASE_URL: str = "sqlite:///./sql_app.db"
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     def get_database_url(self) -> str:
         """Получение URL базы данных"""
         if self.TESTING:
-            return "sqlite+aiosqlite:///./test.db"
+            return "sqlite:///./test.db"
         return self.DATABASE_URL
     
     # Redis
