@@ -1,53 +1,44 @@
 # Core
-fastapi==0.68.0
-uvicorn==0.15.0
-python-dotenv==0.19.0
-sqlalchemy==1.4.23
-alembic==1.7.1
-psycopg2-binary==2.9.1
-aiogram==3.0.0
-aiohttp==3.8.1
-python-jose==3.3.0
-passlib==1.7.4
-bcrypt==3.2.0
-pydantic==1.8.2
-pydantic-settings==2.0.0
-python-multipart==0.0.5
-aiosqlite==0.17.0
-sqlalchemy-utils==0.38.2
-httpx==0.18.2
+fastapi==0.104.1
+uvicorn==0.24.0.post1
+python-dotenv==1.0.0
+pydantic==2.5.2
+pydantic-settings==2.1.0
+email-validator==2.1.0.post1
 
 # Database
-sqlalchemy==2.0.38
-asyncpg==0.30.0  # Асинхронный драйвер PostgreSQL
-alembic==1.14.1
+sqlalchemy==2.0.25
+asyncpg==0.29.0  # Асинхронный драйвер PostgreSQL
+alembic==1.13.1
 SQLAlchemy-Utils==0.41.1
+aiosqlite==0.19.0  # SQLite для тестов
 
-# Cache & Queue
-redis[hiredis]==5.2.1
-celery[redis]==5.4.0
-fastapi-cache2==0.2.2
+# FastAPI Components
+python-multipart==0.0.7
+Jinja2==3.1.2
+itsdangerous==2.1.2
 
 # Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 slowapi==0.1.9
-certifi==2025.1.31
+certifi==2023.11.17
 
-# Monitoring
-prometheus-client==0.21.1
-sentry-sdk==2.22.0
-prometheus-fastapi-instrumentator==5.11.2
-
-# Logging
-loguru==0.7.3
+# Monitoring and Logging
+prometheus-client==0.17.1
+prometheus-fastapi-instrumentator==6.1.0
+loguru==0.7.2
 
 # Telegram
-aiogram==3.18.0
-aiohttp==3.11.12
+aiogram==3.2.0
+aiohttp==3.9.1
 
 # Testing
-httpx==0.28.1
+httpx==0.25.2
 
 # Utilities
-tenacity==9.0.0 
+tenacity==8.2.3
+
+# Vercel Specific
+python-http-client==3.3.7
+starlette==0.27.0 
