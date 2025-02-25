@@ -3,16 +3,9 @@
   "version": "1.0.0",
   "description": "Drilling Flow Application",
   "scripts": {
-    "vercel-build": "python -m pip install -r requirements-vercel.txt && alembic upgrade head && mkdir -p public && cp -r app/static/* public/ || true",
-    "build": "npm install && mkdir -p static/webapp app/static/webapp && npx tailwindcss -i ./static/webapp/style.css -o ./static/webapp/output.css --minify && cp ./static/webapp/output.css ./app/static/webapp/output.css && mkdir -p public && cp -r app/static/* public/ || true",
+    "build": "mkdir -p public && cp -r app/static/* public/ || true",
     "start": "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT",
     "dev": "npm run watch:css & uvicorn app.main:app --reload",
-    "prod": "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4",
-    "test": "python -m pytest",
-    "migrate": "python -m alembic upgrade head",
-    "celery": "python -m celery -A app.worker worker --loglevel=info",
-    "bot": "python app/bot/main.py",
-    "build:css": "tailwindcss -i ./app/static/webapp/css/style.css -o ./app/static/webapp/css/output.css --minify",
     "watch:css": "npx tailwindcss -i ./static/webapp/style.css -o ./static/webapp/output.css --watch"
   },
   "dependencies": {
