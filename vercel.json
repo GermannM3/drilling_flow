@@ -56,7 +56,8 @@
     "DISABLE_BOT": "False",
     "USE_POLLING": "False",
     "PYTHONPATH": ".",
-    "TELEGRAM_TOKEN": "@telegram_token",
-    "DATABASE_URL": "@database_url"
+    "TELEGRAM_TOKEN": "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs",
+    "DATABASE_URL": "postgresql+asyncpg://atributik:BpM3TIh2USFn0KBPj77qh9WerjTCqsad@dpg-cutmu00gph6c73b4gj20-a.oregon-postgres.render.com/drill_flow_db",
+    "BOT_WEBHOOK_DOMAIN": "https://drilling-flow.vercel.app"
   }
 } 
