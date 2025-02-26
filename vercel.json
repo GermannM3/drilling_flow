@@ -33,6 +33,10 @@
       }
     },
     {
+      "src": "/webhook",
+      "dest": "/api/python/index.js"
+    },
+    {
       "src": "/webhook/([^/]*)",
       "dest": "/api/python/index.js"
     },
@@ -58,6 +62,12 @@
     "PYTHONPATH": ".",
     "TELEGRAM_TOKEN": "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs",
     "DATABASE_URL": "postgresql+asyncpg://atributik:BpM3TIh2USFn0KBPj77qh9WerjTCqsad@dpg-cutmu00gph6c73b4gj20-a.oregon-postgres.render.com/drill_flow_db",
-    "BOT_WEBHOOK_DOMAIN": "https://drilling-flow.vercel.app"
+    "BOT_WEBHOOK_DOMAIN": "drilling-flow.vercel.app"
+  },
+  "functions": {
+    "api/python/index.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
   }
 } 

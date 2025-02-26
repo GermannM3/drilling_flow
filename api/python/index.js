@@ -126,6 +126,50 @@ app.get('/api/start-bot', (req, res) => {
   }
 });
 
+// Обработчик для Telegram webhook без токена в URL
+app.post('/webhook', (req, res) => {
+  console.log('Получен запрос от Telegram webhook без токена в URL');
+
+  // Проверяем, что бот не отключен
+  if (process.env.DISABLE_BOT === 'True') {
+    console.error('Бот отключен в настройках');
+    return res.status(403).json({ error: 'Bot is disabled' });
+  }
+
+  // Передаем данные боту через временный файл
+  const updateData = req.body;
+  const updateFile = path.join(process.cwd(), 'update.json');
+  
+  try {
+    fs.writeFileSync(updateFile, JSON.stringify(updateData, null, 2));
+    
+    // Запускаем обработчик апдейта с передачей файла
+    const env = {
+      ...process.env,
+      TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN,
+      USE_POLLING: 'False',
+      DISABLE_BOT: 'False',
+      UPDATE_FILE: updateFile,
+      PATH: process.env.PATH
+    };
+    
+    const updateProcess = spawn('python', ['bot/process_update.py'], {
+      env,
+      detached: true,
+      stdio: 'ignore'
+    });
+    
+    updateProcess.unref();
+    
+    // Немедленно отвечаем телеграму успехом
+    res.status(200).send('OK');
+    console.log('Webhook обработан успешно');
+  } catch (error) {
+    console.error('Ошибка при обработке webhook:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // Обработчик для Telegram webhook
 app.post('/webhook/:token', (req, res) => {
   const token = req.params.token;
