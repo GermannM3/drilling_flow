@@ -26,7 +26,9 @@ app.use(express.static('public', {
   }
 }));
 
+// Важно: используем bodyParser для обработки JSON-запросов от Telegram
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Маршрут для запуска бота
 app.get('/api/start-bot', (req, res) => {
@@ -128,7 +130,8 @@ app.get('/api/start-bot', (req, res) => {
 
 // Обработчик для Telegram webhook без токена в URL
 app.post('/webhook', (req, res) => {
-  console.log('Получен запрос от Telegram webhook без токена в URL');
+  console.log('Получен запрос от Telegram webhook на /webhook');
+  console.log('Тело запроса:', JSON.stringify(req.body).substring(0, 200) + '...');
 
   // Проверяем, что бот не отключен
   if (process.env.DISABLE_BOT === 'True') {
@@ -136,12 +139,19 @@ app.post('/webhook', (req, res) => {
     return res.status(403).json({ error: 'Bot is disabled' });
   }
 
-  // Передаем данные боту через временный файл
-  const updateData = req.body;
-  const updateFile = path.join(process.cwd(), 'update.json');
-  
+  // Проверяем наличие данных в запросе
+  if (!req.body || Object.keys(req.body).length === 0) {
+    console.error('Пустое тело запроса в webhook');
+    return res.status(400).json({ error: 'Empty request body' });
+  }
+
   try {
+    // Передаем данные боту через временный файл
+    const updateData = req.body;
+    const updateFile = path.join(process.cwd(), 'update.json');
+    
     fs.writeFileSync(updateFile, JSON.stringify(updateData, null, 2));
+    console.log(`Данные webhook сохранены в файл: ${updateFile}`);
     
     // Запускаем обработчик апдейта с передачей файла
     const env = {
@@ -153,10 +163,25 @@ app.post('/webhook', (req, res) => {
       PATH: process.env.PATH
     };
     
+    console.log('Запуск обработчика webhook с токеном:', env.TELEGRAM_TOKEN ? env.TELEGRAM_TOKEN.substring(0, 5) + '...' : 'не установлен');
+    
     const updateProcess = spawn('python', ['bot/process_update.py'], {
       env,
       detached: true,
-      stdio: 'ignore'
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    
+    // Логируем вывод процесса для отладки
+    updateProcess.stdout.on('data', (data) => {
+      console.log(`Вывод обработчика webhook: ${data.toString()}`);
+    });
+    
+    updateProcess.stderr.on('data', (data) => {
+      console.error(`Ошибка обработчика webhook: ${data.toString()}`);
+    });
+    
+    updateProcess.on('error', (err) => {
+      console.error('Ошибка при запуске обработчика webhook:', err);
     });
     
     updateProcess.unref();
@@ -166,7 +191,7 @@ app.post('/webhook', (req, res) => {
     console.log('Webhook обработан успешно');
   } catch (error) {
     console.error('Ошибка при обработке webhook:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
   }
 });
 
@@ -260,29 +285,41 @@ app.get('/', (req, res) => {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>DrillFlow - Система управления буровыми работами</title>
+        <link rel="stylesheet" href="/style.css">
+        <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <style>
           body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: var(--neutral-bg);
+            color: var(--text-light);
           }
           .container {
             max-width: 800px;
             margin: 0 auto;
-            background-color: #fff;
+            background-color: var(--neutral-card);
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid var(--neutral-border);
           }
           h1 {
-            color: #333;
+            color: var(--text-light);
+            font-family: 'Oswald', sans-serif;
           }
           .api-status {
-            background-color: #e8f5e9;
+            background-color: var(--neutral-card);
             padding: 10px;
             border-radius: 4px;
             margin-top: 20px;
+            border: 1px solid var(--primary-color);
+          }
+          .btn-primary {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
           }
         </style>
       </head>
@@ -291,11 +328,12 @@ app.get('/', (req, res) => {
           <h1>DrillFlow API</h1>
           <p>Сервер запущен и работает нормально.</p>
           <div class="api-status">
-            <p>Статус API: Онлайн</p>
+            <p>Статус API: <span class="status-active">Онлайн</span></p>
             <p>Время сервера: ${new Date().toLocaleString('ru-RU')}</p>
           </div>
           <p>Для доступа к API используйте /api</p>
           <p>Для доступа к боту используйте <a href="https://t.me/Drill_Flow_bot" target="_blank">@Drill_Flow_bot</a></p>
+          <a href="/api/start-bot" class="btn-primary">Запустить бота</a>
         </div>
       </body>
       </html>
@@ -305,6 +343,8 @@ app.get('/', (req, res) => {
 
 // Обрабатываем 404 ошибки
 app.use((req, res, next) => {
+  console.log(`404 ошибка для пути: ${req.path}, метод: ${req.method}`);
+  
   if (req.path.endsWith('.css')) {
     // Если запрашивается CSS файл, который не найден, попробуем отдать основной CSS
     const mainCss = path.join(process.cwd(), 'public', 'style.css');
@@ -317,7 +357,8 @@ app.use((req, res, next) => {
   res.status(404).json({
     status: 'error',
     message: 'Страница не найдена',
-    path: req.path
+    path: req.path,
+    method: req.method
   });
 });
 

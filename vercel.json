@@ -18,6 +18,16 @@
   ],
   "routes": [
     {
+      "src": "/webhook",
+      "dest": "/api/python/index.js",
+      "methods": ["POST"]
+    },
+    {
+      "src": "/webhook/(.*)",
+      "dest": "/api/python/index.js",
+      "methods": ["POST"]
+    },
+    {
       "src": "/style\\.css",
       "dest": "/style.css",
       "headers": {
@@ -31,14 +41,6 @@
       "headers": {
         "cache-control": "public, max-age=86400"
       }
-    },
-    {
-      "src": "/webhook",
-      "dest": "/api/python/index.js"
-    },
-    {
-      "src": "/webhook/([^/]*)",
-      "dest": "/api/python/index.js"
     },
     {
       "src": "/api/(.*)",
