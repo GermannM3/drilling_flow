@@ -7,6 +7,11 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     """Application settings"""
+    # Project info
+    PROJECT_NAME: str = "DrillFlow"
+    VERSION: str = "0.1.0"
+    DEBUG: bool = False
+    
     # Bot settings
     TELEGRAM_TOKEN: str
     USE_POLLING: bool = False
@@ -20,12 +25,12 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     
     # Application settings
-    DEBUG: bool = False
     VERCEL: bool = False
     
+    # CORS settings
+    CORS_ORIGINS: str = "*"
+    
     # Основные настройки
-    PROJECT_NAME: str = "DrillFlow"
-    VERSION: str = "0.1.0"
     ENVIRONMENT: str = "development"
     TESTING: bool = False
     
@@ -89,10 +94,6 @@ class Settings(BaseSettings):
     BOT_ADMIN_GROUP_ID: Optional[int] = None
     BOT_SUPPORT_GROUP_ID: Optional[int] = None
     
-    # CORS и хосты
-    ALLOWED_HOSTS: str = "localhost,127.0.0.1,drilling-flow.vercel.app"
-    CORS_ORIGINS: str = "*"
-    
     # API ключи
     YANDEX_API_KEY: Optional[str] = "fa6c1c44-4070-4d63-819b-bd6fbb5bae9e"
     SUPABASE_URL: Optional[str] = None
@@ -115,13 +116,8 @@ class Settings(BaseSettings):
     ]
 
     @property
-    def allowed_hosts_list(self) -> List[str]:
-        """Преобразует строку ALLOWED_HOSTS в список"""
-        return [host.strip() for host in self.ALLOWED_HOSTS.split(",")]
-
-    @property
     def cors_origins_list(self) -> List[str]:
-        """Преобразует строку CORS_ORIGINS в список"""
+        """Convert CORS_ORIGINS string to list"""
         if self.CORS_ORIGINS == "*":
             return ["*"]
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]

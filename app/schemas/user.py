@@ -6,11 +6,7 @@ from pydantic import BaseModel, Field, validator, EmailStr
 from datetime import datetime
 from enum import Enum
 from .order import Order
-
-class UserRoleEnum(str, Enum):
-    ADMIN = "admin"
-    CONTRACTOR = "contractor"
-    CLIENT = "client"
+from .base import BaseSchema, UserRoleEnum
 
 class UserBase(BaseModel):
     telegram_id: str
@@ -19,8 +15,12 @@ class UserBase(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
 
-class UserCreate(UserBase):
-    password: str = Field(..., min_length=8)
+class UserCreate(BaseSchema):
+    """Schema for creating a new user"""
+    telegram_id: str
+    username: str = Field(..., min_length=3, max_length=50)
+    first_name: str
+    email: Optional[EmailStr] = None
     role: UserRoleEnum = UserRoleEnum.CLIENT
 
 class UserUpdate(BaseModel):
@@ -45,16 +45,16 @@ class UserUpdate(BaseModel):
             raise ValueError('Долгота должна быть между -180 и 180')
         return v
 
-class User(UserBase):
+class User(UserCreate):
+    """Schema for user with additional fields"""
     id: int
     is_active: bool = True
     is_verified: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
-    role: UserRoleEnum
-    rating: float = 0.0
-    location_lat: Optional[float] = None
-    location_lon: Optional[float] = None
+    rating: Optional[float] = Field(None, ge=0, le=5)
+    location_lat: Optional[float] = Field(None, ge=-90, le=90)
+    location_lon: Optional[float] = Field(None, ge=-180, le=180)
 
     class Config:
         orm_mode = True

@@ -3,7 +3,7 @@ Entry point for Vercel Serverless Functions
 """
 import os
 from mangum import Mangum
-from app.core.config import create_app
+from app.core.application import create_app
 
 # Set environment flags
 os.environ["VERCEL"] = "True"
