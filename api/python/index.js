@@ -200,19 +200,38 @@ app.post('/webhook/:token', (req, res) => {
   const token = req.params.token;
   
   // Проверяем, что токен совпадает с нашим
-  if (token !== process.env.TELEGRAM_TOKEN) {
+  if (token !== process.env.TELEGRAM_SECRET_TOKEN) {
     console.error('Неверный токен в запросе вебхука');
     return res.status(403).json({ error: 'Forbidden' });
   }
-  
-  console.log('Получен запрос от Telegram webhook');
-  
-  // Передаем данные боту через временный файл
-  const updateData = req.body;
-  const updateFile = path.join(process.cwd(), 'update.json');
-  
+  // Handle OPTIONS requests for CORS preflight
+app.options('/webhook', (req, res) => {
+  res.status(200).end();
+});
+
+app.options('/webhook/:token', (req, res) => {
+  res.status(200).end();
+});
+
+  // Проверяем, что бот не отключен
+  if (process.env.DISABLE_BOT === 'True') {
+    console.error('Бот отключен в настройках');
+    return res.status(403).json({ error: 'Bot is disabled' });
+  }
+
+  // Проверяем наличие данных в запросе
+  if (!req.body || Object.keys(req.body).length === 0) {
+    console.error('Пустое тело запроса в webhook');
+    return res.status(400).json({ error: 'Empty request body' });
+  }
+
   try {
+    // Передаем данные боту через временный файл
+    const updateData = req.body;
+    const updateFile = path.join(process.cwd(), 'update.json');
+    
     fs.writeFileSync(updateFile, JSON.stringify(updateData, null, 2));
+    console.log(`Данные webhook сохранены в файл: ${updateFile}`);
     
     // Запускаем обработчик апдейта с передачей файла
     const env = {
@@ -227,7 +246,20 @@ app.post('/webhook/:token', (req, res) => {
     const updateProcess = spawn('python', ['bot/process_update.py'], {
       env,
       detached: true,
-      stdio: 'ignore'
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    
+    // Логируем вывод процесса для отладки
+    updateProcess.stdout.on('data', (data) => {
+      console.log(`Вывод обработчика webhook: ${data.toString()}`);
+    });
+    
+    updateProcess.stderr.on('data', (data) => {
+      console.error(`Ошибка обработчика webhook: ${data.toString()}`);
+    });
+    
+    updateProcess.on('error', (err) => {
+      console.error('Ошибка при запуске обработчика webhook:', err);
     });
     
     updateProcess.unref();
@@ -379,4 +411,4 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-module.exports = app; 
+module.exports = app;

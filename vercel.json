@@ -1,75 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "bash vercel-build.sh",
-  "outputDirectory": "public",
   "builds": [
     {
-      "src": "api/python/index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "public/**/*",
-      "use": "@vercel/static"
+      "src": "api/**/*.js",
+      "use": "@vercel/node@2.0.0"
     }
   ],
   "routes": [
-    {
-      "src": "/webhook",
-      "dest": "/api/python/index.js",
-      "methods": ["POST"]
-    },
-    {
-      "src": "/webhook/(.*)",
-      "dest": "/api/python/index.js",
-      "methods": ["POST"]
-    },
-    {
-      "src": "/style\\.css",
-      "dest": "/style.css",
-      "headers": {
-        "cache-control": "public, max-age=86400",
-        "content-type": "text/css"
-      }
-    },
-    {
-      "src": "/favicon\\.ico",
-      "dest": "/favicon.ico",
-      "headers": {
-        "cache-control": "public, max-age=86400"
-      }
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/python/index.js"
-    },
-    {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|json|svg|webp))",
-      "dest": "/public/$1",
-      "headers": {
-        "cache-control": "public, max-age=86400"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/api/python/index.js"
-    }
-  ],
-  "env": {
-    "DISABLE_BOT": "False",
-    "USE_POLLING": "False",
-    "PYTHONPATH": ".",
-    "TELEGRAM_TOKEN": "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs",
-    "DATABASE_URL": "postgresql+asyncpg://atributik:BpM3TIh2USFn0KBPj77qh9WerjTCqsad@dpg-cutmu00gph6c73b4gj20-a.oregon-postgres.render.com/drill_flow_db",
-    "BOT_WEBHOOK_DOMAIN": "drilling-flow.vercel.app"
-  },
-  "functions": {
-    "api/python/index.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  }
-} 
+    { "src": "/api/(.*)", "dest": "/api/$1" }
+  ]
+}
