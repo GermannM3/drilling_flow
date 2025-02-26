@@ -1,61 +1,40 @@
 """
-Конфигурация базы данных
+Database configuration and session management
 """
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
 
-def get_database_url() -> str:
-    """Получение URL базы данных в зависимости от окружения"""
-    if os.getenv("VERCEL"):
-        return "sqlite:///./sql_app.db"
-    return os.getenv(
-        "DATABASE_URL",
-        "postgresql+asyncpg://atributik:BpM3TIh2USFn0KBPj77qh9WerjTCqsad@dpg-cutmu00gph6c73b4gj20-a.oregon-postgres.render.com/drill_flow_db"
-    )
+# Create async engine
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    pool_size=settings.POSTGRES_POOL_SIZE,
+    max_overflow=settings.POSTGRES_MAX_OVERFLOW,
+    pool_timeout=settings.POSTGRES_POOL_TIMEOUT,
+    echo=settings.DEBUG
+)
 
-DATABASE_URL = get_database_url()
-Base = declarative_base()
+# Create async session factory
+async_session_maker = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False
+)
 
-if "sqlite" in DATABASE_URL:
-    engine = create_engine(
-        DATABASE_URL,
-        connect_args={"check_same_thread": False}
-    )
-    SessionLocal = sessionmaker(
-        autocommit=False,
-        autoflush=False,
-        bind=engine
-    )
+class Base(DeclarativeBase):
+    """Base class for SQLAlchemy models"""
+    pass
 
-    async def get_db():
-        """Получение сессии БД для SQLite"""
-        db = SessionLocal()
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency for getting async database session"""
+    async with async_session_maker() as session:
         try:
-            yield db
+            yield session
         finally:
-            db.close()
-else:
-    # Создаем асинхронный движок
-    engine = create_async_engine(
-        settings.DATABASE_URL,
-        echo=settings.DEBUG,
-        future=True
-    )
+            await session.close()
 
-    # Создаем фабрику асинхронных сессий
-    async_session = sessionmaker(
-        engine,
-        class_=AsyncSession,
-        expire_on_commit=False
-    )
-
-    # Функция для получения сессии БД
-    async def get_db():
-        async with async_session() as session:
-            try:
-                yield session
-            finally:
-                await session.close() 
+# Export all
+__all__ = ["Base", "engine", "async_session_maker", "get_async_session"] 

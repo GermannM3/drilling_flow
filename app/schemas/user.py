@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, validator, EmailStr
 from datetime import datetime
 from enum import Enum
 from .order import Order
-from .base import BaseSchema, UserRoleEnum
+from .base import BaseSchema, UserRoleEnum, Rating, Latitude, Longitude, PhoneNumber, Username
 
 class UserBase(BaseModel):
     telegram_id: str
@@ -18,9 +18,10 @@ class UserBase(BaseModel):
 class UserCreate(BaseSchema):
     """Schema for creating a new user"""
     telegram_id: str
-    username: str = Field(..., min_length=3, max_length=50)
-    first_name: str
+    username: Username
+    first_name: str = Field(min_length=2, max_length=50)
     email: Optional[EmailStr] = None
+    phone: Optional[PhoneNumber] = None
     role: UserRoleEnum = UserRoleEnum.CLIENT
 
 class UserUpdate(BaseModel):
@@ -52,9 +53,9 @@ class User(UserCreate):
     is_verified: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
-    rating: Optional[float] = Field(None, ge=0, le=5)
-    location_lat: Optional[float] = Field(None, ge=-90, le=90)
-    location_lon: Optional[float] = Field(None, ge=-180, le=180)
+    rating: Optional[Rating] = None
+    location_lat: Optional[Latitude] = None
+    location_lon: Optional[Longitude] = None
 
     class Config:
         orm_mode = True
@@ -85,4 +86,16 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 class TokenData(BaseModel):
-    username: Optional[str] = None 
+    username: Optional[str] = None
+
+class ContractorProfile(BaseSchema):
+    """Schema for contractor profile"""
+    user_id: int
+    company_name: Optional[str] = Field(None, min_length=2, max_length=100)
+    description: Optional[str] = Field(None, min_length=10, max_length=1000)
+    specializations: List[str] = Field(default_list=[])
+    work_radius_km: Optional[float] = Field(None, gt=0, le=1000)
+    is_available: bool = True
+    rating: Rating = Field(default=0.0)
+    completed_orders: int = Field(default=0, ge=0)
+    failed_orders: int = Field(default=0, ge=0) 

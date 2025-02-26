@@ -25,9 +25,24 @@ from .base import (
     UserRoleEnum,
     ServiceTypeEnum,
     OrderStatus,
+    Rating,
+    Latitude,
+    Longitude,
+    PhoneNumber,
+    Username,
+    PositiveFloat
 )
-from .order import Order, OrderCreate
-from .user import User, UserCreate
+from .order import (
+    Order,
+    OrderCreate,
+    OrderRating,
+    ContractorOrder
+)
+from .user import (
+    User,
+    UserCreate,
+    ContractorProfile
+)
 
 __all__ = [
     # Base
@@ -35,10 +50,19 @@ __all__ = [
     "UserRoleEnum",
     "ServiceTypeEnum",
     "OrderStatus",
+    "Rating",
+    "Latitude",
+    "Longitude",
+    "PhoneNumber",
+    "Username",
+    "PositiveFloat",
     # Order
     "Order",
     "OrderCreate",
+    "OrderRating",
+    "ContractorOrder",
     # User
     "User",
     "UserCreate",
+    "ContractorProfile",
 ] 

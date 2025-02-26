@@ -5,7 +5,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 from datetime import datetime
 from enum import Enum
-from .base import BaseSchema, ServiceTypeEnum, OrderStatus
+from .base import BaseSchema, ServiceTypeEnum, OrderStatus, PositiveFloat, Rating
 
 class OrderBase(BaseModel):
     title: str
@@ -19,8 +19,9 @@ class OrderCreate(BaseSchema):
     client_id: str
     service_type: ServiceTypeEnum
     address: str
-    description: str
+    description: str = Field(min_length=10, max_length=1000)
     status: OrderStatus = OrderStatus.NEW
+    price: Optional[PositiveFloat] = None
 
 class OrderUpdate(BaseModel):
     title: Optional[str] = None
@@ -89,5 +90,17 @@ class Order(OrderCreate):
     contractor_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    price: Optional[float] = Field(None, ge=0)
-    rating: Optional[float] = Field(None, ge=1, le=5) 
+    rating: Optional[Rating] = None
+
+class OrderRating(BaseSchema):
+    """Schema for order rating"""
+    order_id: int
+    rating: Rating
+    comment: Optional[str] = Field(None, min_length=10, max_length=500)
+    created_at: datetime
+
+class ContractorOrder(Order):
+    """Schema for order with contractor details"""
+    client_name: str
+    client_phone: Optional[str] = None
+    distance_km: Optional[PositiveFloat] = None 
