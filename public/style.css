@@ -6,17 +6,19 @@
 @tailwind utilities;
 
 :root {
-  --primary-color: #2abd46;
-  --primary-dark: #1a7b2d;
-  --primary-light: #8bea9c;
-  --neutral-bg: #1D232A;
-  --neutral-darker: #0C0E11;
+  --blue-primary: #3b82f6;
+  --blue-dark: #1d4ed8;
+  --emerald-primary: #10b981;
+  --emerald-dark: #059669;
+  --neutral-bg: #1e293b;
+  --neutral-darker: #0f172a;
 }
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: var(--neutral-bg);
+  background-color: #030712;
   color: #ffffff;
+  min-height: 100vh;
 }
 
 .main-title {
@@ -27,31 +29,132 @@ body {
   font-family: 'Roboto', sans-serif;
 }
 
+/* Анимации */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shine {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+/* Градиентные эффекты */
+.animated-gradient {
+  background: linear-gradient(270deg, var(--blue-primary), var(--emerald-primary), var(--blue-primary));
+  background-size: 200% auto;
+  animation: shine 8s linear infinite;
+}
+
+/* Стили для карточек */
 .card {
-  @apply bg-neutral-400 rounded-lg p-6 shadow-lg transition-all duration-300;
+  @apply rounded-2xl border-2 border-white/10 backdrop-blur-md transition-all duration-300;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
 .card:hover {
-  @apply shadow-xl transform -translate-y-1;
+  box-shadow: 0 20px 35px -10px rgba(14, 165, 233, 0.2);
+  transform: translateY(-5px);
 }
 
+/* Стили для кнопок */
 .btn-primary {
-  @apply bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded-md transition-all duration-300;
+  @apply bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300;
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+}
+
+.btn-primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
 }
 
 .btn-secondary {
-  @apply bg-neutral-600 hover:bg-neutral-700 text-white font-bold py-2 px-4 rounded-md transition-all duration-300;
+  @apply bg-gray-800 hover:bg-gray-700 text-blue-300 font-bold py-3 px-6 rounded-xl transition-all duration-300;
+  border: 2px solid rgba(59, 130, 246, 0.2);
 }
 
-.stats-value {
-  @apply text-3xl font-bold text-primary-300;
+.btn-secondary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.15);
 }
 
-.stats-label {
-  @apply text-sm text-gray-400;
+/* Иконки Material */
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24;
 }
 
-/* Custom Scrollbar */
+/* Эффекты свечения и теней */
+.glow {
+  box-shadow: 0 0 15px rgba(14, 165, 233, 0.5);
+}
+
+.glow-text {
+  text-shadow: 0 0 10px rgba(14, 165, 233, 0.7);
+}
+
+/* Индикаторы статуса */
+.status-indicator {
+  @apply px-3 py-1 rounded-full text-xs font-semibold;
+}
+
+.status-active {
+  @apply bg-emerald-600 text-emerald-100;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.status-warning {
+  @apply bg-amber-500 text-amber-100;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.status-inactive {
+  @apply bg-gray-600 text-gray-100;
+}
+
+.status-error {
+  @apply bg-red-600 text-red-100;
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+}
+
+/* Специальные градиентные эффекты для текста */
+.gradient-text {
+  @apply text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400;
+}
+
+/* Стеклянный эффект */
+.glass-effect {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Настраиваемый скроллбар */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -61,60 +164,24 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary-dark);
+  background: linear-gradient(to bottom, var(--blue-primary), var(--emerald-primary));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-color);
+  background: linear-gradient(to bottom, var(--blue-dark), var(--emerald-dark));
 }
 
-/* Animation */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+/* Медиа-запросы для адаптивности */
+@media (max-width: 640px) {
+  .card {
+    padding: 1rem;
   }
-  50% {
-    opacity: 0.7;
+  
+  .btn-primary, .btn-secondary {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
   }
-}
-
-.pulse-animation {
-  animation: pulse 2s infinite;
-}
-
-/* Dashboard specific */
-.stat-card {
-  @apply flex flex-col items-center justify-center p-5 rounded-lg;
-  background: linear-gradient(to bottom right, #1A2026, #0C0E11);
-  border-left: 3px solid var(--primary-color);
-}
-
-.map-container {
-  @apply rounded-lg overflow-hidden;
-  height: 400px;
-  background: #1B2127;
-  border: 1px solid #2a3441;
-}
-
-.drill-status {
-  @apply px-2 py-1 rounded text-xs font-medium;
-}
-
-.status-active {
-  @apply bg-primary-500 text-white;
-}
-
-.status-warning {
-  @apply bg-yellow-500 text-black;
-}
-
-.status-inactive {
-  @apply bg-neutral-600 text-white;
-}
-
-.status-error {
-  @apply bg-red-500 text-white;
 }
 
 /* Data tables */

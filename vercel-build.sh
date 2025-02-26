@@ -1,39 +1,67 @@
 #!/bin/bash
 
-# Выводим версии Python и pip
-echo "Python version:"
-python --version
-echo "Pip version:"
-pip --version
+# Скрипт для сборки проекта на Vercel
 
-# Устанавливаем зависимости для Vercel
+echo "Начало сборки проекта DrillFlow на Vercel"
+echo "Текущая директория: $(pwd)"
+
+# Установка Python зависимостей
+echo "Установка Python зависимостей..."
 pip install -r requirements-vercel.txt
 
-# Создаем директории для статических файлов
-echo "Создание директорий для статических файлов..."
-mkdir -p app/static
-mkdir -p app/static/webapp
-mkdir -p app/static/webapp/images
-mkdir -p app/static/webapp/css
-mkdir -p app/static/webapp/js
-mkdir -p app/templates
+# Создание директории для статических файлов, если она не существует
+if [ ! -d "public" ]; then
+  echo "Создание директории public..."
+  mkdir -p public
+fi
 
-# Создаем директорию public для Vercel
-echo "Создание директории public для Vercel..."
-mkdir -p public
-mkdir -p public/css
-mkdir -p public/js
-mkdir -p public/images
-
-# Создаем пустые файлы для статических ресурсов
-echo "Создание пустых файлов для статических ресурсов..."
-touch app/static/webapp/style.css
-touch public/style.css
-
-# Копируем статические файлы
+# Копирование статических файлов
 echo "Копирование статических файлов..."
-cp -r app/static/webapp/* public/ || echo "Не удалось скопировать файлы из app/static/webapp"
-ls -la app/static/webapp || echo "Директория app/static/webapp не существует или пуста"
-ls -la public || echo "Директория public не существует или пуста"
+cp -r static/* public/ 2>/dev/null || echo "Директория static не найдена или пуста"
 
-echo "Build completed successfully!" 
+# Проверка наличия файла style.css в public
+if [ ! -f "public/style.css" ]; then
+  echo "Копирование style.css в public..."
+  cp public/style.css public/ 2>/dev/null || echo "Файл style.css не найден"
+fi
+
+# Проверка наличия favicon.ico
+if [ ! -f "public/favicon.ico" ]; then
+  echo "Создание базового favicon.ico..."
+  touch public/favicon.ico
+fi
+
+# Установка Node.js зависимостей
+echo "Установка Node.js зависимостей..."
+npm install
+
+# Сборка Tailwind CSS
+echo "Сборка Tailwind CSS..."
+npx tailwindcss -i ./public/style.css -o ./public/style.css --minify
+
+# Создание директории для API
+if [ ! -d "api/python" ]; then
+  echo "Создание директории api/python..."
+  mkdir -p api/python
+fi
+
+# Проверка наличия файла index.js в api/python
+if [ ! -f "api/python/index.js" ]; then
+  echo "ОШИБКА: Файл api/python/index.js не найден!"
+  exit 1
+fi
+
+# Проверка наличия файла bot.py
+if [ ! -f "bot/bot.py" ]; then
+  echo "ОШИБКА: Файл bot/bot.py не найден!"
+  exit 1
+fi
+
+# Проверка наличия файла process_update.py
+if [ ! -f "bot/process_update.py" ]; then
+  echo "ОШИБКА: Файл bot/process_update.py не найден!"
+  exit 1
+fi
+
+echo "Сборка завершена успешно!"
+exit 0 

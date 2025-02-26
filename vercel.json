@@ -2,18 +2,6 @@
   "version": 2,
   "buildCommand": "bash vercel-build.sh",
   "outputDirectory": "public",
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/api/python/index.js"
-    }
-  ],
-  "env": {
-    "DISABLE_BOT": "False",
-    "USE_POLLING": "True",
-    "PYTHONPATH": "/var/task",
-    "TELEGRAM_TOKEN": "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs"
-  },
   "builds": [
     {
       "src": "api/python/index.js",
@@ -22,6 +10,53 @@
     {
       "src": "package.json",
       "use": "@vercel/node"
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
     }
-  ]
+  ],
+  "routes": [
+    {
+      "src": "/style\\.css",
+      "dest": "/style.css",
+      "headers": {
+        "cache-control": "public, max-age=86400",
+        "content-type": "text/css"
+      }
+    },
+    {
+      "src": "/favicon\\.ico",
+      "dest": "/favicon.ico",
+      "headers": {
+        "cache-control": "public, max-age=86400"
+      }
+    },
+    {
+      "src": "/webhook/([^/]*)",
+      "dest": "/api/python/index.js"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/python/index.js"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|json|svg|webp))",
+      "dest": "/public/$1",
+      "headers": {
+        "cache-control": "public, max-age=86400"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/python/index.js"
+    }
+  ],
+  "env": {
+    "DISABLE_BOT": "False",
+    "USE_POLLING": "False",
+    "PYTHONPATH": ".",
+    "TELEGRAM_TOKEN": "@telegram_token",
+    "DATABASE_URL": "@database_url"
+  }
 } 

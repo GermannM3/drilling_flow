@@ -210,7 +210,7 @@ try:
     # Создаем клавиатуру для основного меню
     main_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     main_keyboard.add(KeyboardButton("📊 Статистика"))
-    main_keyboard.add(KeyboardButton("📝 Отчеты"), KeyboardButton("🔍 Создать заказ"))
+    main_keyboard.add(KeyboardButton("📝 Отчеты"), KeyboardButton("📋 Создать заказ"))
     main_keyboard.add(KeyboardButton("⚙️ Настройки"), KeyboardButton("❓ Помощь"))
     
     # Создаем инлайн клавиатуру для отчетов
@@ -298,7 +298,7 @@ try:
                 
                 stats_text = (
                     f"📊 *Статистика на {current_date}*\n\n"
-                    f"🔄 Всего операций: {len(operations)}\n"
+                    f"📈 Всего операций: {len(operations)}\n"
                     f"✅ Завершено: {completed}\n"
                     f"⏳ В процессе: {in_progress}\n"
                     f"📏 Общая глубина бурения: {total_depth}м\n\n"
@@ -309,7 +309,7 @@ try:
                 stats_text = (
                     f"📊 *Статистика на {current_date}*\n\n"
                     f"У вас пока нет операций бурения.\n"
-                    f"Используйте кнопку '🔍 Создать заказ' для начала работы.\n\n"
+                    f"Используйте кнопку '📋 Создать заказ' для начала работы.\n\n"
                     f"_Последнее обновление: {datetime.now().strftime('%H:%M:%S')}_"
                 )
             
@@ -339,7 +339,7 @@ try:
             logger.info(f"Пользователь {message.from_user.username} (ID: {message.from_user.id}) запросил создание заказа")
             
             await message.answer(
-                "🔍 Выберите тип заказа:",
+                "📋 Выберите тип заказа:",
                 reply_markup=order_keyboard
             )
         except Exception as e:
@@ -473,7 +473,7 @@ try:
             logger.error(traceback.format_exc())
             await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
     
-    @dp.message_handler(lambda message: message.text == "🔍 Создать заказ")
+    @dp.message_handler(lambda message: message.text == "📋 Создать заказ")
     async def text_order(message: types.Message):
         try:
             await cmd_order(message)
@@ -496,10 +496,10 @@ try:
             if has_settings:
                 await message.answer(
                     "⚙️ *Настройки уведомлений*\n\n"
-                    "🔔 Критические предупреждения: Включены\n"
-                    "🔕 Обычные уведомления: Выключены\n"
+                    "🔴 Критические предупреждения: Включены\n"
+                    "🔵 Обычные уведомления: Выключены\n"
                     "⏰ Ежедневный отчет: Включен (08:00)\n"
-                    "📅 Еженедельный отчет: Включен (Пн, 09:00)\n\n"
+                    "📅 Еженедельный отчет: Включен (ПН, 09:00)\n\n"
                     "_Для изменения настроек используйте веб-интерфейс._",
                     parse_mode="Markdown"
                 )
@@ -572,7 +572,7 @@ try:
         # Текстовые команды
         dp.register_message_handler(text_stats, lambda message: message.text == "📊 Статистика")
         dp.register_message_handler(text_reports, lambda message: message.text == "📝 Отчеты")
-        dp.register_message_handler(text_order, lambda message: message.text == "🔍 Создать заказ")
+        dp.register_message_handler(text_order, lambda message: message.text == "📋 Создать заказ")
         dp.register_message_handler(text_settings, lambda message: message.text == "⚙️ Настройки")
         dp.register_message_handler(text_help, lambda message: message.text == "❓ Помощь")
         
@@ -593,15 +593,12 @@ try:
         
         if USE_POLLING:
             logger.info("Запуск бота в режиме polling")
-            executor.start_polling(dp, skip_updates=True)
+            executor.start_polling(dp, skip_updates=True, on_startup=on_startup, on_shutdown=on_shutdown)
         else:
-            logger.info("Запуск бота в режиме webhook")
-            # В этом режиме бот будет ждать запросов от вебхука
-            # Для работы на Vercel это должно быть обработано в API эндпоинте
-            # В данном случае это происходит в api/python/index.js
+            logger.info("Бот настроен для работы через webhook")
             sys.exit(0)
 
 except Exception as e:
-    logger.critical(f"Критическая ошибка при инициализации бота: {e}")
+    logger.critical(f"Критическая ошибка при запуске бота: {e}")
     logger.critical(traceback.format_exc())
     sys.exit(1) 
