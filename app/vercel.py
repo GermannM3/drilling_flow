@@ -1,14 +1,16 @@
 """
-Точка входа для Vercel Serverless Functions.
+Entry point for Vercel Serverless Functions
 """
 import os
+from mangum import Mangum
+from app.core.config import create_app
 
-# Устанавливаем флаг, что мы в среде Vercel
-os.environ['VERCEL'] = 'True'
+# Set environment flags
+os.environ["VERCEL"] = "True"
+os.environ["USE_POLLING"] = "False"
 
-from app.core.application import create_app
-
+# Create FastAPI application instance
 app = create_app()
 
-# Экспортируем приложение как handler для Vercel
-handler = app 
+# Create ASGI handler for Vercel
+handler = Mangum(app, lifespan="off") 

@@ -2,11 +2,38 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.js",
-      "use": "@vercel/node@2.0.0"
+      "src": "app/vercel.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11"
+      }
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" }
-  ]
+    {
+      "src": "/(api/)?webhook",
+      "dest": "app/vercel.py",
+      "methods": ["POST", "GET", "OPTIONS"],
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "app/vercel.py"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": ".",
+    "TELEGRAM_BOT_DOMAIN": "drilling-flow.vercel.app",
+    "VERCEL": "1",
+    "USE_POLLING": "False"
+  }
 }

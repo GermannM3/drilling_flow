@@ -247,3 +247,162 @@ docker run -d -p 8001:8001 --env-file .env drilling-flow
    ```
    https://germannm3-drilling-flow-12c3.twc1.net/bot-health
    ``` 
+
+# DrillFlow Bot
+
+Телеграм-бот для автоматизации распределения заказов на буровые работы. Построен с использованием FastAPI и aiogram 3.x.
+
+## Технологический стек
+
+- Python 3.11
+- FastAPI
+- aiogram 3.x
+- PostgreSQL
+- Alembic (миграции)
+- Vercel (деплой)
+
+## Структура проекта
+
+```
+drilling_flow/
+├── app/
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── webhook.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── bot.py
+│   │   └── config.py
+│   ├── db/
+│   │   ├── __init__.py
+│   │   └── migrations/
+│   └── vercel.py
+├── public/
+│   ├── style.css
+│   └── index.html
+├── alembic.ini
+├── requirements.txt
+├── vercel.json
+├── vercel.sh
+└── README.md
+```
+
+## Локальная разработка
+
+### Предварительные требования
+
+- Python 3.11+
+- pip
+- PostgreSQL
+- Telegram Bot Token (получить у [@BotFather](https://t.me/BotFather))
+
+### Установка
+
+1. Клонируйте репозиторий:
+```bash
+git clone https://github.com/your-username/drilling_flow.git
+cd drilling_flow
+```
+
+2. Создайте виртуальное окружение:
+```bash
+python -m venv venv
+source venv/bin/activate  # для Linux/macOS
+venv\\Scripts\\activate   # для Windows
+```
+
+3. Установите зависимости:
+```bash
+pip install -r requirements.txt
+```
+
+4. Создайте файл `.env` в корневой директории:
+```env
+TELEGRAM_TOKEN=your_bot_token
+DATABASE_URL=postgresql://user:password@localhost:5432/drilling_flow
+TELEGRAM_BOT_DOMAIN=your_domain
+USE_POLLING=True  # для локальной разработки
+```
+
+### Запуск
+
+1. Запустите PostgreSQL
+
+2. Примените миграции:
+```bash
+alembic upgrade head
+```
+
+3. Запустите бот в режиме разработки:
+```bash
+python -m app.core.bot
+```
+
+## Деплой на Vercel
+
+### Предварительные требования
+
+- Аккаунт на Vercel
+- Установленный Vercel CLI
+- Домен (опционально)
+
+### Шаги деплоя
+
+1. Установите Vercel CLI:
+```bash
+npm i -g vercel
+```
+
+2. Войдите в свой аккаунт:
+```bash
+vercel login
+```
+
+3. Настройте переменные окружения на Vercel:
+- TELEGRAM_TOKEN
+- DATABASE_URL
+- TELEGRAM_BOT_DOMAIN
+- USE_POLLING=False
+
+4. Выполните деплой:
+```bash
+vercel --prod
+```
+
+5. Настройте вебхук для бота:
+```bash
+curl "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook?url=https://your-domain.vercel.app/api/webhook"
+```
+
+### Проверка работы
+
+1. Откройте URL вашего бота в Telegram
+2. Проверьте статус вебхука:
+```bash
+curl "https://api.telegram.org/bot${TELEGRAM_TOKEN}/getWebhookInfo"
+```
+
+## Мониторинг и логи
+
+- Логи доступны в панели управления Vercel
+- Для локальной разработки логи выводятся в консоль
+- Формат логов: `[timestamp] level name - message`
+
+## Безопасность
+
+- Все запросы к API защищены CORS
+- Используется HTTPS
+- Проверка Telegram токена
+- Валидация входящих данных
+
+## Поддержка
+
+При возникновении проблем:
+1. Проверьте логи
+2. Убедитесь, что все переменные окружения установлены
+3. Проверьте статус вебхука
+4. Создайте issue в репозитории
+
+## Лицензия
+
+MIT 

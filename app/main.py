@@ -1,7 +1,7 @@
 """
 Точка входа FastAPI приложения
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
@@ -15,6 +15,7 @@ from app.routers import router as api_router
 from app.core.init_db import init_db
 from app.core.bot import bot, dp, setup_bot_commands, start_polling
 from app.db.models import User, Order, OrderRating  # Явно импортируем модели
+from aiogram import types
 
 settings = get_settings()
 
@@ -109,6 +110,14 @@ def create_app() -> FastAPI:
             "version": settings.VERSION,
             "environment": "testing" if settings.TESTING else "production"
         }
+
+    @app.post("/api/webhook")
+    async def telegram_webhook(request: Request):
+        data = await request.json()
+        update = types.Update(**data)
+        # Передаем обновление в диспетчер бота
+        await dp.process_update(update)
+        return {"status": "ok"}
 
     return app
 

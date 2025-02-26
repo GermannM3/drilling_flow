@@ -1,17 +1,32 @@
 """
-Конфигурация приложения
+Configuration settings for the application
 """
 from typing import List, Optional
 from pydantic_settings import BaseSettings
+from functools import lru_cache
 
 class Settings(BaseSettings):
-    """Настройки приложения"""
+    """Application settings"""
+    # Bot settings
+    TELEGRAM_TOKEN: str
+    USE_POLLING: bool = False
+    TELEGRAM_BOT_DOMAIN: str = ""
+    BOT_WEBHOOK_URL: str = ""
+    
+    # Database settings
+    DATABASE_URL: str
+    
+    # Redis settings
+    REDIS_URL: str = "redis://localhost:6379/0"
+    
+    # Application settings
+    DEBUG: bool = False
+    VERCEL: bool = False
     
     # Основные настройки
     PROJECT_NAME: str = "DrillFlow"
     VERSION: str = "0.1.0"
     ENVIRONMENT: str = "development"
-    DEBUG: bool = False
     TESTING: bool = False
     
     # Python
@@ -29,7 +44,6 @@ class Settings(BaseSettings):
     KEEPALIVE: int = 120
     
     # База данных
-    DATABASE_URL: str = "sqlite:///./sql_app.db"
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
@@ -51,7 +65,6 @@ class Settings(BaseSettings):
         return self.DATABASE_URL
     
     # Redis
-    REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
     REDIS_MAX_CONNECTIONS: int = 100
@@ -72,14 +85,9 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_SECOND: int = 100
     
     # Telegram
-    TELEGRAM_TOKEN: str = "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs"
-    BOT_WEBHOOK_URL: Optional[str] = None
     BOT_WEBHOOK_DOMAIN: Optional[str] = None
     BOT_ADMIN_GROUP_ID: Optional[int] = None
     BOT_SUPPORT_GROUP_ID: Optional[int] = None
-    TELEGRAM_BOT_DOMAIN: str = "https://drilling-flow.vercel.app"
-    USE_POLLING: bool = True  # Использовать поллинг вместо вебхука
-    DISABLE_BOT: bool = False  # Отключить бота полностью
     
     # CORS и хосты
     ALLOWED_HOSTS: str = "localhost,127.0.0.1,drilling-flow.vercel.app"
@@ -122,8 +130,9 @@ class Settings(BaseSettings):
         env_file = ".env"
         case_sensitive = True
 
+@lru_cache()
 def get_settings() -> Settings:
-    """Получение настроек приложения"""
+    """Get cached settings"""
     return Settings()
 
 settings = get_settings() 
