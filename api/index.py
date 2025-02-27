@@ -1,16 +1,30 @@
-"""
-Точка входа для Vercel Serverless Functions.
-"""
-import os
+from http.server import BaseHTTPRequestHandler
+import json
 
-# Устанавливаем флаг, что мы в среде Vercel
-os.environ['VERCEL'] = 'True'
-
-from fastapi import FastAPI
-from app.core.application import create_app
-
-# Создаем экземпляр приложения
-app = create_app()
-
-# Экспортируем ASGI приложение для Vercel
-handler = app 
+class handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        
+        response = {
+            "status": "success",
+            "received": json.loads(post_data.decode('utf-8'))
+        }
+        
+        self.wfile.write(json.dumps(response).encode('utf-8'))
+        
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        
+        response = {
+            "status": "ok",
+            "message": "DrillFlow API is running"
+        }
+        
+        self.wfile.write(json.dumps(response).encode('utf-8')) 
