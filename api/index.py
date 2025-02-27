@@ -5,7 +5,7 @@ import asyncio
 import sys
 from http.server import BaseHTTPRequestHandler
 from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import Command, CommandStart, Text
+from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils.markdown import hbold
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -126,7 +126,7 @@ async def help_command(message: Message):
         return False
 
 # Обработчик текстовых сообщений с эмодзи
-@dp.message(Text(startswith="📋"))
+@dp.message(F.text.startswith("📋"))
 async def profile_text(message: Message):
     """Обработчик текстовых сообщений с эмодзи 'Профиль'"""
     try:
@@ -137,7 +137,7 @@ async def profile_text(message: Message):
         logger.error(f"Failed to process profile text: {e}")
         return False
 
-@dp.message(Text(startswith="📦"))
+@dp.message(F.text.startswith("📦"))
 async def orders_text(message: Message):
     """Обработчик текстовых сообщений с эмодзи 'Заказы'"""
     try:
@@ -148,7 +148,7 @@ async def orders_text(message: Message):
         logger.error(f"Failed to process orders text: {e}")
         return False
 
-@dp.message(Text(startswith="❓"))
+@dp.message(F.text.startswith("❓"))
 async def help_text(message: Message):
     """Обработчик текстовых сообщений с эмодзи 'Помощь'"""
     try:
@@ -159,7 +159,7 @@ async def help_text(message: Message):
         logger.error(f"Failed to process help text: {e}")
         return False
 
-@dp.message(Text(startswith="📊"))
+@dp.message(F.text.startswith("📊"))
 async def stats_text(message: Message):
     """Обработчик текстовых сообщений с эмодзи 'Статистика'"""
     try:
@@ -175,7 +175,7 @@ async def stats_text(message: Message):
         logger.error(f"Failed to process stats text: {e}")
         return False
 
-@dp.message(Text(startswith="📝"))
+@dp.message(F.text.startswith("📝"))
 async def reports_text(message: Message):
     """Обработчик текстовых сообщений с эмодзи 'Отчеты'"""
     try:
@@ -191,7 +191,7 @@ async def reports_text(message: Message):
         logger.error(f"Failed to process reports text: {e}")
         return False
 
-@dp.message(Text(startswith="⚙️"))
+@dp.message(F.text.startswith("⚙️"))
 async def settings_text(message: Message):
     """Обработчик текстовых сообщений с эмодзи 'Настройки'"""
     try:
