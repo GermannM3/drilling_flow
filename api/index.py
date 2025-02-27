@@ -44,10 +44,10 @@ def get_main_keyboard():
     ])
     return keyboard
 
-# Обработчик команды /start и /начать
-@dp.message(CommandStart() | Command("начать"))
+# Обработчик команды /start
+@dp.message(CommandStart())
 async def start_command(message: Message):
-    """Обработчик команды /start и /начать"""
+    """Обработчик команды /start"""
     try:
         logger.info(f"Received start command from user {message.from_user.id}")
         await message.answer(
@@ -66,10 +66,16 @@ async def start_command(message: Message):
         logger.error(f"Traceback: {sys.exc_info()}")
         return False
 
-# Обработчик команды /profile и /профиль
-@dp.message(Command("profile") | Command("профиль"))
+# Обработчик команды /начать
+@dp.message(Command("начать"))
+async def start_command_ru(message: Message):
+    """Обработчик команды /начать"""
+    return await start_command(message)
+
+# Обработчик команды /profile
+@dp.message(Command("profile"))
 async def profile_command(message: Message):
-    """Обработчик команды /profile и /профиль"""
+    """Обработчик команды /profile"""
     try:
         logger.info(f"Received profile command from user {message.from_user.id}")
         await message.answer(
@@ -85,10 +91,16 @@ async def profile_command(message: Message):
         logger.error(f"Failed to send profile info: {e}")
         return False
 
-# Обработчик команды /orders и /заказы
-@dp.message(Command("orders") | Command("заказы") | Command("приказы"))
+# Обработчик команды /профиль
+@dp.message(Command("профиль"))
+async def profile_command_ru(message: Message):
+    """Обработчик команды /профиль"""
+    return await profile_command(message)
+
+# Обработчик команды /orders
+@dp.message(Command("orders"))
 async def orders_command(message: Message):
-    """Обработчик команды /orders и /заказы"""
+    """Обработчик команды /orders"""
     try:
         logger.info(f"Received orders command from user {message.from_user.id}")
         await message.answer(
@@ -105,10 +117,16 @@ async def orders_command(message: Message):
         logger.error(f"Failed to send orders info: {e}")
         return False
 
-# Обработчик команды /help и /помощь
-@dp.message(Command("help") | Command("помощь"))
+# Обработчик команды /заказы
+@dp.message(Command("заказы"))
+async def orders_command_ru(message: Message):
+    """Обработчик команды /заказы"""
+    return await orders_command(message)
+
+# Обработчик команды /help
+@dp.message(Command("help"))
 async def help_command(message: Message):
-    """Обработчик команды /help и /помощь"""
+    """Обработчик команды /help"""
     try:
         logger.info(f"Received help command from user {message.from_user.id}")
         await message.answer(
@@ -124,6 +142,12 @@ async def help_command(message: Message):
     except Exception as e:
         logger.error(f"Failed to send help info: {e}")
         return False
+
+# Обработчик команды /помощь
+@dp.message(Command("помощь"))
+async def help_command_ru(message: Message):
+    """Обработчик команды /помощь"""
+    return await help_command(message)
 
 # Обработчик текстовых сообщений с эмодзи
 @dp.message(F.text.startswith("📋"))
@@ -307,10 +331,6 @@ async def process_update(update_data: dict) -> bool:
             
         logger.info(f"Created Update object: {update_type}")
         
-        # Создаем новый event loop для каждого запроса
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
         try:
             # Передаем обновление в диспетчер
             result = await dp.feed_update(bot=bot, update=update)
@@ -319,9 +339,10 @@ async def process_update(update_data: dict) -> bool:
             else:
                 logger.warning("Update not processed by any handler")
             return True
-        finally:
-            # Закрываем loop после обработки
-            loop.close()
+        except Exception as e:
+            logger.error(f"Error processing update through dispatcher: {e}")
+            logger.error(f"Traceback: {sys.exc_info()}")
+            return False
             
     except Exception as e:
         logger.error(f"Error processing update: {e}")
