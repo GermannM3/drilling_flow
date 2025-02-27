@@ -89,8 +89,8 @@ async def cmd_start(message: types.Message, state: FSMContext):
                     f"👋 Добро пожаловать в DrillFlow, {message.from_user.first_name}!\n"
                     "Я помогу вам заказать услуги по бурению скважин и монтажу канализации.",
                     reply_markup=main_keyboard
-                )
-            else:
+            )
+        else:
                 await message.answer(
                     f"С возвращением, {user.first_name}!",
                     reply_markup=main_keyboard
@@ -184,7 +184,7 @@ async def process_description(message: types.Message, state: FSMContext):
                         .button(text="❌ Отказаться", callback_data=f"decline_{order.id}")
                         .as_markup()
                     )
-                except Exception as e:
+        except Exception as e:
                     logger.error(f"Error sending notification to contractor {contractor.id}: {e}")
             
             await message.answer(
@@ -194,7 +194,7 @@ async def process_description(message: types.Message, state: FSMContext):
             
     except Exception as e:
         logger.error(f"Error creating order: {e}")
-        await message.answer(
+            await message.answer(
             "❌ Произошла ошибка при создании заказа. Попробуйте позже.",
             reply_markup=main_keyboard
         )
@@ -237,7 +237,7 @@ async def process_contractor_response(callback: types.CallbackQuery):
             else:  # decline
                 await callback.answer("Вы отказались от заказа")
                 
-    except Exception as e:
+        except Exception as e:
         logger.error(f"Error processing contractor response: {e}")
         await callback.answer("Произошла ошибка. Попробуйте позже.")
 
@@ -245,7 +245,7 @@ async def start_polling():
     """Запуск бота"""
     try:
         await dp.start_polling(bot)
-    except Exception as e:
+        except Exception as e:
         logger.error(f"Error starting bot: {e}")
 
 if __name__ == "__main__":

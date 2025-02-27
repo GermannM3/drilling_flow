@@ -3,23 +3,43 @@
   "builds": [
     {
       "src": "api/index.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": { 
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11"
+      }
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/webhook",
-      "dest": "/api/index.py"
+      "methods": ["POST", "GET", "OPTIONS"],
+      "dest": "api/index.py",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "api/index.py"
     },
     {
       "src": "/(.*)",
-      "dest": "/api/index.py"
+      "dest": "public/$1"
     }
   ],
   "env": {
     "PYTHONPATH": ".",
-    "PYTHONUNBUFFERED": "1",
-    "DEBUG": "True",
+    "MAX_WORKERS": "1",
+    "VERCEL": "1",
+    "USE_POLLING": "0",
+    "DEBUG": "0",
     "ENVIRONMENT": "production"
   }
 }
