@@ -1,11 +1,13 @@
 {
   "version": 2,
-  "buildCommand": "bash vercel-build.sh",
-  "outputDirectory": "public",
   "builds": [
     {
-      "src": "api/python/index.js",
-      "use": "@vercel/node"
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11"
+      }
     },
     {
       "src": "public/**/*",
@@ -15,17 +17,17 @@
   "routes": [
     {
       "src": "/webhook",
-      "dest": "/api/python/index.js",
+      "dest": "api/index.py",
       "methods": ["POST", "OPTIONS"]
     },
     {
       "src": "/webhook/(.*)",
-      "dest": "/api/python/index.js",
+      "dest": "api/index.py",
       "methods": ["POST", "OPTIONS"]
     },
     {
       "src": "/api/(.*)",
-      "dest": "/api/python/index.js"
+      "dest": "api/index.py"
     },
     {
       "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|json|svg|webp))",
@@ -36,7 +38,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/api/python/index.js"
+      "dest": "api/index.py"
     }
   ],
   "env": {
