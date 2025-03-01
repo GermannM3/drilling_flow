@@ -323,4 +323,5 @@ async def on_shutdown():
 # Обработчик для Vercel Serverless Functions
 def handler(request, context):
     """Обработчик для Vercel Serverless Functions"""
-    return app 
+    # Возвращаем асинхронную функцию, которая будет вызвана Vercel
+    return app(request.scope, request.receive, request.send) 

@@ -1,14 +1,66 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.py": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
   "builds": [
     {
       "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11",
+        "pip": ["--no-cache-dir", "-r", "vercel_requirements.txt"]
+      }
+    },
+    {
+      "src": "api/index_simple.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11"
+      }
+    },
+    {
+      "src": "api/webhook_simple.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11"
+      }
+    },
+    {
+      "src": "api/set_webhook.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11"
+      }
+    },
+    {
+      "src": "api/health_simple.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11"
+      }
+    },
+    {
+      "src": "api/debug_simple.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11"
+      }
+    },
+    {
+      "src": "api/test.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11",
+        "pip": ["--no-cache-dir", "-r", "vercel_requirements.txt"]
+      }
+    },
+    {
+      "src": "api/simple_test.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
@@ -23,27 +75,42 @@
   "routes": [
     {
       "src": "/webhook",
-      "dest": "api/index.py",
+      "dest": "api/webhook_simple.py",
       "methods": ["POST", "GET", "OPTIONS"]
     },
     {
       "src": "/webhook/(.*)",
-      "dest": "api/index.py",
+      "dest": "api/webhook_simple.py",
       "methods": ["POST", "GET", "OPTIONS"]
     },
     {
+      "src": "/set-webhook",
+      "dest": "api/set_webhook.py",
+      "methods": ["GET"]
+    },
+    {
       "src": "/health",
-      "dest": "api/index.py",
+      "dest": "api/health_simple.py",
       "methods": ["GET"]
     },
     {
       "src": "/debug",
-      "dest": "api/index.py",
+      "dest": "api/debug_simple.py",
+      "methods": ["GET"]
+    },
+    {
+      "src": "/api/test",
+      "dest": "api/test.py",
+      "methods": ["GET"]
+    },
+    {
+      "src": "/api/simple-test",
+      "dest": "api/simple_test.py",
       "methods": ["GET"]
     },
     {
       "src": "/api/(.*)",
-      "dest": "api/index.py"
+      "dest": "api/index_simple.py"
     },
     {
       "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|json|svg|webp))",
@@ -54,7 +121,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "api/index.py"
+      "dest": "api/index_simple.py"
     }
   ],
   "env": {
