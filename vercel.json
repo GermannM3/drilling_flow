@@ -27,6 +27,14 @@
       }
     },
     {
+      "src": "api/stripe_webhook.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.11"
+      }
+    },
+    {
       "src": "api/set_webhook.py",
       "use": "@vercel/python",
       "config": {
@@ -84,6 +92,11 @@
       "methods": ["POST", "GET", "OPTIONS"]
     },
     {
+      "src": "/stripe/webhook",
+      "dest": "api/stripe_webhook.py",
+      "methods": ["POST", "GET", "OPTIONS"]
+    },
+    {
       "src": "/set-webhook",
       "dest": "api/set_webhook.py",
       "methods": ["GET"]
@@ -131,6 +144,8 @@
     "TELEGRAM_TOKEN": "7554540052:AAEvde_xL9d85kbJBdxPu8B6Mo4UEMF-qBs",
     "DATABASE_URL": "postgresql+asyncpg://atributik:BpM3TIh2USFn0KBPj77qh9WerjTCqsad@dpg-cutmu00gph6c73b4gj20-a.oregon-postgres.render.com/drill_flow_db",
     "BOT_WEBHOOK_DOMAIN": "drilling-flow.vercel.app",
-    "DEBUG": "True"
+    "DEBUG": "True",
+    "STRIPE_API_KEY": "DISABLED_NOT_AVAILABLE_IN_RUSSIA",
+    "STRIPE_WEBHOOK_SECRET": ""
   }
 } 

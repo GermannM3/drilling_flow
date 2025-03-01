@@ -367,11 +367,11 @@ app.get('/', (req, res) => {
   } else {
     // Если файл не существует, отправляем генерируемую страницу
     res.send(`
-      <!DOCTYPE html>
-      <html lang="ru">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!DOCTYPE html>
+    <html lang="ru">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>DrillFlow - Система управления буровыми работами</title>
         <link rel="stylesheet" href="/style.css">
         <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -422,20 +422,20 @@ app.get('/', (req, res) => {
             }
           }
         </script>
-        <style>
-          body {
+      <style>
+        body {
             font-family: 'Inter', sans-serif;
-            margin: 0;
+          margin: 0;
             padding: 0;
             background-color: #1D232A;
             color: #ffffff;
-          }
-          .container {
-            max-width: 800px;
-            margin: 0 auto;
+        }
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
             background-color: #1A2026;
-            padding: 20px;
-            border-radius: 5px;
+          padding: 20px;
+          border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             border: 1px solid #2abd46;
           }
@@ -451,11 +451,11 @@ app.get('/', (req, res) => {
             border: 1px solid #2abd46;
           }
           .btn-primary {
-            display: inline-block;
+          display: inline-block;
             margin-top: 20px;
             text-decoration: none;
             background-color: #2abd46;
-            color: white;
+          color: white;
             padding: 10px 20px;
             border-radius: 5px;
             font-weight: bold;
@@ -467,11 +467,11 @@ app.get('/', (req, res) => {
           }
           .status-active {
             color: #2abd46;
-            font-weight: bold;
-          }
-        </style>
-      </head>
-      <body>
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
         <div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-emerald-900 flex items-center justify-center p-4 sm:p-8">
           <div class="w-full max-w-[800px] bg-gradient-to-br from-gray-800/95 via-blue-900/90 to-emerald-900/90 backdrop-blur-md rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.5)] p-4 sm:p-8 border-2 sm:border-4 border-white/10">
             <header class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
@@ -514,10 +514,10 @@ app.get('/', (req, res) => {
               <p class="text-blue-300/70 text-sm">© 2025 DrillFlow. Все права защищены.</p>
             </div>
           </div>
-        </div>
-      </body>
-      </html>
-    `);
+      </div>
+    </body>
+    </html>
+  `);
   }
 });
 
