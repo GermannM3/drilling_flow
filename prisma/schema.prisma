@@ -31,25 +31,26 @@ enum OrderStatus {
 }
 
 model User {
-  id              Int       @id @default(autoincrement())
-  telegramId      BigInt    @unique
-  chatId          BigInt    @unique
-  firstName       String?
-  lastName        String?
-  username        String?
-  phoneNumber     String?
-  role            String    @default("client")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  isActive        Boolean   @default(true)
-  notificationsEnabled Boolean @default(true)
-  soundEnabled    Boolean   @default(true)
-  location        Location?
+  id            Int            @id @default(autoincrement())
+  telegramId    BigInt        @unique
+  firstName     String
+  lastName      String?
+  username      String?
+  email         String?       @unique
+  phoneNumber   String?
+  photoUrl      String?
+  isActive      Boolean       @default(true)
+  role          Role          @default(CLIENT)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relationships
+  clientOrders    Order[]       @relation("ClientOrders")
+  contractorOrders Order[]      @relation("ContractorOrders")
   documents       Document[]
-  orders         Order[]    @relation("ClientOrders")
-  contractorOrders Order[]  @relation("ContractorOrders")
-  ratings        Rating[]   @relation("RatedBy")
-  receivedRatings Rating[]  @relation("RatedUser")
+  payments        Payment[]
+  subscription    Subscription?
+  settings        Settings?
 }
 
 model Location {
@@ -64,33 +65,33 @@ model Location {
 }
 
 model Document {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
-  type        String
-  fileId      String
-  status      String   @default("pending")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  type      String
+  url       String
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Order {
   id            Int      @id @default(autoincrement())
+  serviceType   String
+  description   String
+  address       String
+  status        Status   @default(PENDING)
+  price         Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relationships
   clientId      Int
   client        User     @relation("ClientOrders", fields: [clientId], references: [id])
   contractorId  Int?
   contractor    User?    @relation("ContractorOrders", fields: [contractorId], references: [id])
-  serviceType   String
-  description   String
-  status        String   @default("pending")
-  address       String?
-  latitude      Float?
-  longitude     Float?
-  price         Float?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  completedAt   DateTime?
-  rating        Rating?
 }
 
 model Rating {
@@ -104,4 +105,64 @@ model Rating {
   score         Int
   comment       String?
   createdAt     DateTime @default(now())
+}
+
+model Payment {
+  id            Int      @id @default(autoincrement())
+  amount        Float
+  status        String
+  paymentMethod String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relationships
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Subscription {
+  id            Int      @id @default(autoincrement())
+  type          SubType
+  startDate     DateTime @default(now())
+  endDate       DateTime
+  autoRenew     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relationships
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Settings {
+  id              Int      @id @default(autoincrement())
+  notifications   Boolean  @default(true)
+  language        String   @default("ru")
+  radius          Int      @default(50)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relationships
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  CLIENT
+  CONTRACTOR
+  ADMIN
+}
+
+enum Status {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum SubType {
+  BASIC
+  PREMIUM
+  PROFESSIONAL
 } 
