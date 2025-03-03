@@ -3,6 +3,7 @@ const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const { execSync } = require('child_process');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -198,4 +199,74 @@ async function main() {
 }
 
 // Запуск главной функции
-main(); 
+main();
+
+async function setup() {
+  console.log('🚀 Начинаем установку DrillFlow...');
+
+  // Проверяем наличие .env файла
+  if (!fs.existsSync('.env')) {
+    console.log('📝 Создаем файл .env...');
+    const defaultEnv = `# Настройки базы данных
+DATABASE_URL=postgresql://username:password@localhost:5432/drill_flow_db
+
+# Настройки JWT
+JWT_SECRET=your-secret-key-here
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+JWT_EXPIRES_IN="24h"
+
+# Настройки Telegram бота
+TELEGRAM_BOT_TOKEN=your-bot-token-here
+
+# Настройки сервера
+PORT=3001
+NODE_ENV=development
+
+# Настройки геолокации
+DEFAULT_WORK_RADIUS=10
+MAX_WORK_RADIUS=100`;
+
+    fs.writeFileSync('.env', defaultEnv);
+    console.log('✅ Файл .env создан. Пожалуйста, заполните его своими данными.');
+  }
+
+  // Устанавливаем зависимости
+  console.log('📦 Устанавливаем зависимости...');
+  execSync('npm install', { stdio: 'inherit' });
+
+  // Создаем базу данных и применяем миграции
+  console.log('🗄️ Настраиваем базу данных...');
+  try {
+    execSync('npx prisma migrate dev', { stdio: 'inherit' });
+  } catch (error) {
+    console.error('❌ Ошибка при настройке базы данных. Убедитесь, что PostgreSQL запущен и данные в .env корректны.');
+    process.exit(1);
+  }
+
+  console.log(`
+✨ Установка завершена! ✨
+
+Для запуска бота:
+1. Отредактируйте файл .env и укажите:
+   - DATABASE_URL - URL вашей базы данных PostgreSQL
+   - TELEGRAM_BOT_TOKEN - токен вашего бота от @BotFather
+
+2. Запустите бот командой:
+   npm run dev
+
+Документация доступна в файле README.md
+  `);
+
+  rl.question('Хотите запустить бота сейчас? (y/n) ', (answer) => {
+    if (answer.toLowerCase() === 'y') {
+      console.log('🤖 Запускаем бота...');
+      execSync('npm run dev', { stdio: 'inherit' });
+    } else {
+      console.log('👋 До встречи! Запустите бота позже командой npm run dev');
+    }
+    rl.close();
+  });
+}
+
+setup().catch(console.error); 

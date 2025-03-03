@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CLIENT
+  CONTRACTOR
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  BLOCKED
+}
+
+enum OrderStatus {
+  NEW
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  telegramId      BigInt    @unique
+  chatId          BigInt    @unique
+  firstName       String?
+  lastName        String?
+  username        String?
+  phoneNumber     String?
+  role            String    @default("client")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  isActive        Boolean   @default(true)
+  notificationsEnabled Boolean @default(true)
+  soundEnabled    Boolean   @default(true)
+  location        Location?
+  documents       Document[]
+  orders         Order[]    @relation("ClientOrders")
+  contractorOrders Order[]  @relation("ContractorOrders")
+  ratings        Rating[]   @relation("RatedBy")
+  receivedRatings Rating[]  @relation("RatedUser")
+}
+
+model Location {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id])
+  latitude    Float
+  longitude   Float
+  workRadius  Float    @default(10)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Document {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  type        String
+  fileId      String
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id            Int      @id @default(autoincrement())
+  clientId      Int
+  client        User     @relation("ClientOrders", fields: [clientId], references: [id])
+  contractorId  Int?
+  contractor    User?    @relation("ContractorOrders", fields: [contractorId], references: [id])
+  serviceType   String
+  description   String
+  status        String   @default("pending")
+  address       String?
+  latitude      Float?
+  longitude     Float?
+  price         Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  completedAt   DateTime?
+  rating        Rating?
+}
+
+model Rating {
+  id            Int      @id @default(autoincrement())
+  orderId       Int      @unique
+  order         Order    @relation(fields: [orderId], references: [id])
+  ratedById     Int
+  ratedBy       User     @relation("RatedBy", fields: [ratedById], references: [id])
+  ratedUserId   Int
+  ratedUser     User     @relation("RatedUser", fields: [ratedUserId], references: [id])
+  score         Int
+  comment       String?
+  createdAt     DateTime @default(now())
+} 
