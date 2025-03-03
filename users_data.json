@@ -1,0 +1,54 @@
+{
+  "7129776749": {
+    "id": 7129776749,
+    "name": "Новый пользователь",
+    "status": "Активен",
+    "role": "Подрядчик",
+    "rating": 5,
+    "completedOrders": 0,
+    "registrationDate": "02.03.2025",
+    "phone": "",
+    "email": "",
+    "address": "",
+    "notifications": {
+      "newOrders": true,
+      "messages": true,
+      "statusUpdates": true,
+      "financialOperations": true,
+      "emailNotifications": false
+    },
+    "workZone": {
+      "radius": 50,
+      "center": "Москва"
+    },
+    "security": {
+      "twoFactorAuth": false,
+      "lastLogin": "02.03.2025"
+    },
+    "subscription": {
+      "status": "Неактивна",
+      "plan": "Базовый",
+      "activationDate": "",
+      "expirationDate": "",
+      "features": []
+    },
+    "stats": {
+      "inProgress": 0,
+      "completed": 0,
+      "cancelled": 0,
+      "positiveReviews": 0,
+      "negativeReviews": 0,
+      "averageCompletionTime": 0,
+      "timelyCompletionRate": 0,
+      "workQuality": "Новичок"
+    },
+    "finance": {
+      "totalIncome": 0,
+      "averageCheck": 0,
+      "bonuses": 0,
+      "currentBalance": 0,
+      "pendingBalance": 0
+    },
+    "orders": []
+  }
+}

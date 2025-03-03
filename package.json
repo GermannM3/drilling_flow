@@ -1,0 +1,24 @@
+{
+  "name": "drill-flow-bot",
+  "version": "1.0.0",
+  "description": "Drill Flow Telegram Bot",
+  "main": "local_test_bot.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node local_test_bot.js",
+    "dev": "nodemon local_test_bot.js",
+    "test:commands": "node test_bot_commands.js",
+    "test:callbacks": "node test_bot_callbacks.js",
+    "setup": "node setup.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "morgan": "^1.10.0",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

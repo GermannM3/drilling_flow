@@ -2,20 +2,16 @@
   "version": 2,
   "builds": [
     {
+      "src": "api/*.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
         "runtime": "python3.11",
         "pip": ["--no-cache-dir", "-r", "vercel_requirements.txt"]
-      }
-    },
-    {
-      "src": "api/index_simple.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb",
-        "runtime": "python3.11"
       }
     },
     {
@@ -35,40 +31,7 @@
       }
     },
     {
-      "src": "api/set_webhook.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb",
-        "runtime": "python3.11"
-      }
-    },
-    {
       "src": "api/health_simple.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb",
-        "runtime": "python3.11"
-      }
-    },
-    {
-      "src": "api/debug_simple.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb",
-        "runtime": "python3.11"
-      }
-    },
-    {
-      "src": "api/test.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb",
-        "runtime": "python3.11",
-        "pip": ["--no-cache-dir", "-r", "vercel_requirements.txt"]
-      }
-    },
-    {
-      "src": "api/simple_test.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
@@ -81,6 +44,11 @@
     }
   ],
   "routes": [
+    {
+      "src": "/api/telegram_bot_webhook",
+      "dest": "api/telegram_bot_webhook.js",
+      "methods": ["POST", "GET", "OPTIONS"]
+    },
     {
       "src": "/webhook",
       "dest": "api/webhook_simple.py",
@@ -97,33 +65,9 @@
       "methods": ["POST", "GET", "OPTIONS"]
     },
     {
-      "src": "/set-webhook",
-      "dest": "api/set_webhook.py",
-      "methods": ["GET"]
-    },
-    {
       "src": "/health",
       "dest": "api/health_simple.py",
       "methods": ["GET"]
-    },
-    {
-      "src": "/debug",
-      "dest": "api/debug_simple.py",
-      "methods": ["GET"]
-    },
-    {
-      "src": "/api/test",
-      "dest": "api/test.py",
-      "methods": ["GET"]
-    },
-    {
-      "src": "/api/simple-test",
-      "dest": "api/simple_test.py",
-      "methods": ["GET"]
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "api/index_simple.py"
     },
     {
       "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|json|svg|webp))",
@@ -134,7 +78,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "api/index_simple.py"
+      "dest": "api/index.py"
     }
   ],
   "env": {

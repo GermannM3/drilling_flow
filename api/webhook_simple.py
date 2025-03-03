@@ -4,7 +4,18 @@ import os
 import urllib.request
 import urllib.parse
 import traceback
+import urllib
 import uuid
+import time
+import sys
+import importlib.util
+from pathlib import Path
+
+# Добавляем текущий каталог в sys.path для импорта модулей
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+
 # Заглушка для Stripe
 # import stripe
 # from api.stripe_subscription import create_customer, create_payment_link, check_subscription_status
@@ -16,663 +27,598 @@ import uuid
 # Простая заглушка для проверки статуса подписки
 subscription_cache = {}
 
+# Импортируем обработчики для подрядчиков
+# Используем динамический импорт в случае проблем
+try:
+    from contractor_handlers import (
+        start_registration,
+        process_registration_step,
+        handle_registration_callback,
+        handle_document_upload,
+        handle_location,
+        show_contractor_profile,
+        RegistrationState,
+        user_states
+    )
+except ImportError:
+    # Пытаемся импортировать динамически
+    handler_path = os.path.join(current_dir, "contractor_handlers.py")
+    if os.path.exists(handler_path):
+        spec = importlib.util.spec_from_file_location("contractor_handlers", handler_path)
+        contractor_handlers = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(contractor_handlers)
+        start_registration = contractor_handlers.start_registration
+        process_registration_step = contractor_handlers.process_registration_step
+        handle_registration_callback = contractor_handlers.handle_registration_callback
+        handle_document_upload = contractor_handlers.handle_document_upload
+        handle_location = contractor_handlers.handle_location
+        show_contractor_profile = contractor_handlers.show_contractor_profile
+        RegistrationState = contractor_handlers.RegistrationState
+        user_states = contractor_handlers.user_states
+    else:
+        print(f"Не удалось найти contractor_handlers.py в {current_dir}")
+        # Создаем заглушки для функций
+        async def start_registration(*args, **kwargs): pass
+        async def process_registration_step(*args, **kwargs): pass
+        async def handle_registration_callback(*args, **kwargs): pass
+        async def handle_document_upload(*args, **kwargs): pass
+        async def handle_location(*args, **kwargs): pass
+        async def show_contractor_profile(*args, **kwargs): pass
+        class RegistrationState:
+            IDLE = "IDLE"
+        user_states = {}
+
+# Импортируем обработчики для заказов
+try:
+    from order_handlers import (
+        distribute_order,
+        offer_order_to_contractor,
+        handle_order_response,
+        show_contractor_orders,
+        show_order_details,
+        update_order_status,
+        OrderStatus
+    )
+except ImportError:
+    # Пытаемся импортировать динамически
+    handler_path = os.path.join(current_dir, "order_handlers.py")
+    if os.path.exists(handler_path):
+        spec = importlib.util.spec_from_file_location("order_handlers", handler_path)
+        order_handlers = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(order_handlers)
+        distribute_order = order_handlers.distribute_order
+        offer_order_to_contractor = order_handlers.offer_order_to_contractor
+        handle_order_response = order_handlers.handle_order_response
+        show_contractor_orders = order_handlers.show_contractor_orders
+        show_order_details = order_handlers.show_order_details
+        update_order_status = order_handlers.update_order_status
+        OrderStatus = order_handlers.OrderStatus
+    else:
+        print(f"Не удалось найти order_handlers.py в {current_dir}")
+        # Создаем заглушки для функций
+        def distribute_order(*args, **kwargs): pass
+        def offer_order_to_contractor(*args, **kwargs): pass
+        async def handle_order_response(*args, **kwargs): pass
+        async def show_contractor_orders(*args, **kwargs): pass
+        async def show_order_details(*args, **kwargs): pass
+        async def update_order_status(*args, **kwargs): pass
+        class OrderStatus:
+            CREATED = "CREATED"
+            ASSIGNED = "ASSIGNED"
+            IN_PROGRESS = "IN_PROGRESS"
+            COMPLETED = "COMPLETED"
+            CANCELLED = "CANCELLED"
+
 def check_subscription_status(user_id):
     """Простая заглушка для проверки статуса подписки"""
     return user_id in subscription_cache and subscription_cache[user_id].get("active", False)
 
-class handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-        
-        # Получаем информацию о вебхуке
-        token = os.getenv("TELEGRAM_TOKEN", "")
-        webhook_url = f"https://{os.getenv('BOT_WEBHOOK_DOMAIN', 'drilling-flow.vercel.app')}/webhook"
-        
-        response_data = {
-            "status": "webhook endpoint is working",
-            "webhook_url": webhook_url
-        }
-        
-        # Пытаемся получить информацию о вебхуке от Telegram
-        try:
-            url = f"https://api.telegram.org/bot{token}/getWebhookInfo"
-            with urllib.request.urlopen(url) as response:
-                webhook_info = json.loads(response.read().decode())
-                response_data["current_webhook"] = webhook_info.get("result", {}).get("url", "")
-                response_data["pending_updates"] = webhook_info.get("result", {}).get("pending_update_count", 0)
-        except Exception as e:
-            response_data["error"] = str(e)
-        
-        self.wfile.write(json.dumps(response_data).encode())
+# Функция для преобразования асинхронной функции в синхронную
+def run_async(async_func, *args, **kwargs):
+    """Запускает асинхронную функцию синхронно"""
+    import asyncio
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(async_func(*args, **kwargs))
+    loop.close()
+    return result
+
+def send_message(token, chat_id, text, reply_markup=None, parse_mode="HTML"):
+    """Отправляет сообщение в Telegram"""
+    send_url = f"https://api.telegram.org/bot{token}/sendMessage"
+    data = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": parse_mode
+    }
     
-    def do_POST(self):
-        # Получаем данные запроса
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        
-        # Отправляем успешный ответ
-        self.send_response(200)
-        self.send_header('Content-type', 'text/plain')
-        self.end_headers()
-        self.wfile.write('OK'.encode())
-        
-        # Обрабатываем полученные данные
-        try:
-            update = json.loads(post_data.decode())
-            print(f"Received update: {update}")
-            
-            # Получаем токен
-            token = os.getenv("TELEGRAM_TOKEN", "")
-            
-            # Проверяем, есть ли сообщение в обновлении
-            if "message" in update and "text" in update["message"]:
-                chat_id = update["message"]["chat"]["id"]
-                text = update["message"]["text"]
-                user_name = update["message"]["from"].get("first_name", "пользователь")
-                user_id = update["message"]["from"]["id"]
-                
-                # Формируем ответ в зависимости от команды
-                if text == "/start":
-                    response_text = f"Привет, {user_name}!\n\nДобро пожаловать в DrillFlow - платформу для управления буровыми работами.\n\n🔹 Заказчики могут размещать заказы\n🔹 Подрядчики могут принимать заказы\n🔹 Автоматическое распределение заказов"
-                    
-                    # Создаем физическую клавиатуру (reply keyboard)
-                    reply_keyboard = {
-                        "keyboard": [
-                            [
-                                {"text": "📋 Профиль"},
-                                {"text": "📦 Заказы"}
-                            ],
-                            [
-                                {"text": "❓ Помощь"},
-                                {"text": "📊 Статистика"}
-                            ],
-                            [
-                                {"text": "💳 Тестовый платеж"},
-                                {"text": "🔄 Подписка"}
-                            ]
-                        ],
-                        "resize_keyboard": True,
-                        "persistent": True
-                    }
-                    
-                    # Создаем инлайн-клавиатуру для дополнительных функций
-                    inline_keyboard = {
-                        "inline_keyboard": [
-                            [
-                                {"text": "📋 Профиль", "callback_data": "profile"},
-                                {"text": "📦 Заказы", "callback_data": "orders"}
-                            ],
-                            [
-                                {"text": "❓ Помощь", "callback_data": "help"},
-                                {"text": "📊 Статистика", "callback_data": "stats"}
-                            ],
-                            [
-                                {"text": "💳 Тестовый платеж", "callback_data": "payment"}
-                            ],
-                            [
-                                {"text": "🔄 Подписка", "callback_data": "subscription"}
-                            ]
-                        ]
-                    }
-                    
-                    # Отправляем сообщение с физической клавиатурой
-                    send_url = f"https://api.telegram.org/bot{token}/sendMessage"
-                    data = {
-                        "chat_id": chat_id,
-                        "text": response_text,
-                        "parse_mode": "HTML",
-                        "reply_markup": reply_keyboard
-                    }
-                    
-                    req = urllib.request.Request(
-                        send_url,
-                        data=json.dumps(data).encode('utf-8'),
-                        headers={'Content-Type': 'application/json'}
-                    )
-                    
-                    with urllib.request.urlopen(req) as response:
-                        result = json.loads(response.read().decode())
-                        print(f"Message with keyboard sent: {result}")
-                    
-                    return
-                
-                # Обработка текстовых команд с физической клавиатуры
-                elif text == "📋 Профиль" or text == "/profile":
-                    response_text = f"Профиль пользователя {user_name}\nID: {update['message']['from']['id']}\nСтатус: Активен"
-                    
-                    # Проверяем статус подписки
-                    has_subscription = False
-                    try:
-                        subscription_status = check_subscription_status(user_id)
-                        if isinstance(subscription_status, bool):
-                            has_subscription = subscription_status
-                    except Exception as e:
-                        print(f"Ошибка при проверке подписки: {e}")
-                    
-                    if has_subscription:
-                        response_text += "\n\n✅ У вас есть активная подписка!"
-                    else:
-                        response_text += "\n\n❌ У вас нет активной подписки. Используйте команду /subscription для оформления."
-                
-                elif text == "📦 Заказы" or text == "/orders":
-                    # Проверяем статус подписки
-                    has_subscription = False
-                    try:
-                        subscription_status = check_subscription_status(user_id)
-                        if isinstance(subscription_status, bool):
-                            has_subscription = subscription_status
-                    except Exception as e:
-                        print(f"Ошибка при проверке подписки: {e}")
-                        
-                    if has_subscription:
-                        response_text = "У вас пока нет активных заказов."
-                    else:
-                        response_text = "❌ Для доступа к заказам требуется активная подписка.\n\nИспользуйте команду /subscription для оформления."
-                
-                elif text == "❓ Помощь" or text == "/help":
-                    response_text = "Список доступных команд:\n/start - начать работу с ботом\n/help - показать справку\n/profile - ваш профиль\n/orders - ваши заказы\n/payment - сделать тестовый платеж\n/subscription - управление подпиской"
-                
-                elif text == "📊 Статистика":
-                    response_text = "Ваша статистика:\nЗаказов выполнено: 0\nРейтинг: ⭐⭐⭐⭐⭐"
-                
-                elif text == "💳 Тестовый платеж" or text == "/payment":
-                    # Показываем выбор платежной системы
-                    self.show_payment_options(token, chat_id)
-                    return
-                
-                elif text == "🔄 Подписка" or text == "/subscription":
-                    # Проверяем статус подписки
-                    has_subscription = False
-                    try:
-                        subscription_status = check_subscription_status(user_id)
-                        if isinstance(subscription_status, bool):
-                            has_subscription = subscription_status
-                    except Exception as e:
-                        print(f"Ошибка при проверке подписки: {e}")
-                    
-                    if has_subscription:
-                        response_text = "✅ У вас уже есть активная подписка!\n\nВаш статус: Активен\nТип: Месячная\n\nПодписка автоматически продлевается в конце периода."
-                    else:
-                        # Показываем опции подписки
-                        self.show_subscription_options(token, chat_id, user_id, user_name)
-                        return
-                
-                else:
-                    response_text = f"Вы написали: {text}\n\nИспользуйте /help для получения списка команд."
-                
-                # Отправляем ответ
-                send_url = f"https://api.telegram.org/bot{token}/sendMessage"
-                data = {
-                    "chat_id": chat_id,
-                    "text": response_text,
-                    "parse_mode": "HTML"
-                }
-                
-                req = urllib.request.Request(
-                    send_url,
-                    data=json.dumps(data).encode('utf-8'),
-                    headers={'Content-Type': 'application/json'}
-                )
-                
-                with urllib.request.urlopen(req) as response:
-                    result = json.loads(response.read().decode())
-                    print(f"Message sent: {result}")
-            
-            # Обработка колбэков от инлайн-кнопок
-            elif "callback_query" in update:
-                callback_id = update["callback_query"]["id"]
-                chat_id = update["callback_query"]["message"]["chat"]["id"]
-                data = update["callback_query"]["data"]
-                user_name = update["callback_query"]["from"].get("first_name", "пользователь")
-                user_id = update["callback_query"]["from"]["id"]
-                
-                # Формируем ответ в зависимости от данных колбэка
-                if data == "profile":
-                    response_text = f"Профиль пользователя {user_name}\nID: {update['callback_query']['from']['id']}\nСтатус: Активен"
-                    
-                    # Проверяем статус подписки
-                    has_subscription = False
-                    try:
-                        subscription_status = check_subscription_status(user_id)
-                        if isinstance(subscription_status, bool):
-                            has_subscription = subscription_status
-                    except Exception as e:
-                        print(f"Ошибка при проверке подписки: {e}")
-                    
-                    if has_subscription:
-                        response_text += "\n\n✅ У вас есть активная подписка!"
-                    else:
-                        response_text += "\n\n❌ У вас нет активной подписки. Используйте команду /subscription для оформления."
-                    
-                elif data == "orders":
-                    # Проверяем статус подписки
-                    has_subscription = False
-                    try:
-                        subscription_status = check_subscription_status(user_id)
-                        if isinstance(subscription_status, bool):
-                            has_subscription = subscription_status
-                    except Exception as e:
-                        print(f"Ошибка при проверке подписки: {e}")
-                        
-                    if has_subscription:
-                        response_text = "У вас пока нет активных заказов."
-                    else:
-                        response_text = "❌ Для доступа к заказам требуется активная подписка.\n\nИспользуйте команду /subscription для оформления."
-                
-                elif data == "help":
-                    response_text = "Раздел помощи. Здесь будет информация о том, как пользоваться ботом."
-                elif data == "stats":
-                    response_text = "Ваша статистика:\nЗаказов выполнено: 0\nРейтинг: ⭐⭐⭐⭐⭐"
-                elif data == "payment":
-                    # Отвечаем на колбэк
-                    self.answer_callback_query(token, callback_id)
-                    # Показываем выбор платежной системы
-                    self.show_payment_options(token, chat_id)
-                    return
-                elif data == "payment_paymaster":
-                    # Отвечаем на колбэк
-                    self.answer_callback_query(token, callback_id)
-                    # Вызываем метод создания счета на оплату через PayMaster
-                    self.send_invoice(token, chat_id, "paymaster")
-                    return
-                elif data == "payment_redsys":
-                    # Отвечаем на колбэк
-                    self.answer_callback_query(token, callback_id)
-                    # Вызываем метод создания счета на оплату через Redsys
-                    self.send_invoice(token, chat_id, "redsys")
-                    return
-                elif data == "subscription":
-                    # Отвечаем на колбэк
-                    self.answer_callback_query(token, callback_id)
-                    
-                    # Проверяем статус подписки
-                    has_subscription = False
-                    try:
-                        subscription_status = check_subscription_status(user_id)
-                        if isinstance(subscription_status, bool):
-                            has_subscription = subscription_status
-                    except Exception as e:
-                        print(f"Ошибка при проверке подписки: {e}")
-                    
-                    if has_subscription:
-                        response_text = "✅ У вас уже есть активная подписка!\n\nВаш статус: Активен\nТип: Месячная\n\nПодписка автоматически продлевается в конце периода."
-                    else:
-                        # Показываем опции подписки
-                        self.show_subscription_options(token, chat_id, user_id, user_name)
-                        return
-                
-                elif data == "subscribe_stripe":
-                    # Удаляем эту опцию, так как Stripe недоступен в России
-                    self.answer_callback_query(token, callback_id)
-                    response_text = "К сожалению, Stripe недоступен в России. Пожалуйста, выберите другой способ оплаты."
-                    
-                    # Отправляем сообщение
-                    send_url = f"https://api.telegram.org/bot{token}/sendMessage"
-                    data = {
-                        "chat_id": chat_id,
-                        "text": response_text,
-                        "parse_mode": "HTML"
-                    }
-                    
-                    req = urllib.request.Request(
-                        send_url,
-                        data=json.dumps(data).encode('utf-8'),
-                        headers={'Content-Type': 'application/json'}
-                    )
-                    
-                    with urllib.request.urlopen(req) as response:
-                        result = json.loads(response.read().decode())
-                        print(f"Message sent: {result}")
-                
-                elif data == "subscribe_paymaster":
-                    # Отвечаем на колбэк
-                    self.answer_callback_query(token, callback_id)
-                    
-                    try:
-                        # Генерируем ID подписки
-                        subscription_id = f"paymaster_{str(uuid.uuid4())}"
-                        
-                        # Сохраняем информацию о подписке в кэш
-                        subscription_cache[user_id] = {
-                            "subscription_id": subscription_id,
-                            "active": True,
-                            "provider": "PayMaster"
-                        }
-                        
-                        # Отправляем счет на оплату через PayMaster
-                        self.send_invoice(token, chat_id, "paymaster", is_subscription=True)
-                    except Exception as e:
-                        response_text = f"Произошла ошибка при оформлении подписки: {str(e)}"
-                        
-                        # Отправляем сообщение
-                        send_url = f"https://api.telegram.org/bot{token}/sendMessage"
-                        data = {
-                            "chat_id": chat_id,
-                            "text": response_text,
-                            "parse_mode": "HTML"
-                        }
-                        
-                        req = urllib.request.Request(
-                            send_url,
-                            data=json.dumps(data).encode('utf-8'),
-                            headers={'Content-Type': 'application/json'}
-                        )
-                        
-                        with urllib.request.urlopen(req) as response:
-                            result = json.loads(response.read().decode())
-                            print(f"Message sent: {result}")
-                
-                elif data == "subscribe_redsys":
-                    # Отвечаем на колбэк
-                    self.answer_callback_query(token, callback_id)
-                    
-                    try:
-                        # Генерируем ID подписки
-                        subscription_id = f"redsys_{str(uuid.uuid4())}"
-                        
-                        # Сохраняем информацию о подписке в кэш
-                        subscription_cache[user_id] = {
-                            "subscription_id": subscription_id,
-                            "active": True,
-                            "provider": "Redsys"
-                        }
-                        
-                        # Отправляем счет на оплату через Redsys
-                        self.send_invoice(token, chat_id, "redsys", is_subscription=True)
-                    except Exception as e:
-                        response_text = f"Произошла ошибка при оформлении подписки: {str(e)}"
-                        
-                        # Отправляем сообщение
-                        send_url = f"https://api.telegram.org/bot{token}/sendMessage"
-                        data = {
-                            "chat_id": chat_id,
-                            "text": response_text,
-                            "parse_mode": "HTML"
-                        }
-                        
-                        req = urllib.request.Request(
-                            send_url,
-                            data=json.dumps(data).encode('utf-8'),
-                            headers={'Content-Type': 'application/json'}
-                        )
-                        
-                        with urllib.request.urlopen(req) as response:
-                            result = json.loads(response.read().decode())
-                            print(f"Message sent: {result}")
-                
-                else:
-                    response_text = f"Выбрано: {data}"
-                
-                # Отвечаем на колбэк, если еще не ответили
-                if data not in ["payment", "payment_paymaster", "payment_redsys", "subscription", "subscribe_stripe", "subscribe_paymaster", "subscribe_redsys"]:
-                    self.answer_callback_query(token, callback_id)
-                
-                # Отправляем сообщение
-                send_url = f"https://api.telegram.org/bot{token}/sendMessage"
-                data = {
-                    "chat_id": chat_id,
-                    "text": response_text,
-                    "parse_mode": "HTML"
-                }
-                
-                req = urllib.request.Request(
-                    send_url,
-                    data=json.dumps(data).encode('utf-8'),
-                    headers={'Content-Type': 'application/json'}
-                )
-                
-                with urllib.request.urlopen(req) as response:
-                    result = json.loads(response.read().decode())
-                    print(f"Message sent: {result}")
-            
-            # Обработка pre-checkout запросов - необходимо для проведения платежей
-            elif "pre_checkout_query" in update:
-                pre_checkout_query_id = update["pre_checkout_query"]["id"]
-                
-                # Подтверждаем предварительную проверку платежа
-                answer_url = f"https://api.telegram.org/bot{token}/answerPreCheckoutQuery"
-                answer_data = {
-                    "pre_checkout_query_id": pre_checkout_query_id,
-                    "ok": True
-                }
-                
-                req = urllib.request.Request(
-                    answer_url,
-                    data=json.dumps(answer_data).encode('utf-8'),
-                    headers={'Content-Type': 'application/json'}
-                )
-                
-                with urllib.request.urlopen(req) as response:
-                    result = json.loads(response.read().decode())
-                    print(f"Pre-checkout query answered: {result}")
-            
-            # Обработка успешных платежей
-            elif "message" in update and "successful_payment" in update["message"]:
-                chat_id = update["message"]["chat"]["id"]
-                payment_info = update["message"]["successful_payment"]
-                user_id = update["message"]["from"]["id"]
-                
-                # Проверяем, была ли это оплата подписки
-                payload = payment_info.get("invoice_payload", "")
-                is_subscription = payload.startswith("subscription_")
-                
-                # Отправляем подтверждение успешного платежа
-                payment_amount = payment_info["total_amount"] / 100  # Переводим в валюту (копейки -> рубли)
-                payment_currency = payment_info["currency"]
-                
-                if is_subscription:
-                    # Активируем подписку для пользователя
-                    subscription_cache[user_id] = {
-                        "active": True,
-                        "subscription_id": payload,
-                        "payment_id": payment_info['telegram_payment_charge_id']
-                    }
-                    
-                    response_text = f"✅ Подписка успешно оформлена!\n\n"
-                    response_text += f"Сумма: {payment_amount} {payment_currency}\n"
-                    response_text += f"Идентификатор платежа: {payment_info['telegram_payment_charge_id']}\n\n"
-                    response_text += f"Ваша подписка активирована. Теперь вам доступны расширенные функции DrillFlow."
-                else:
-                    response_text = f"✅ Платеж успешно выполнен!\n\n"
-                    response_text += f"Сумма: {payment_amount} {payment_currency}\n"
-                    response_text += f"Идентификатор платежа: {payment_info['telegram_payment_charge_id']}\n\n"
-                    response_text += f"Спасибо за оплату! Ваш заказ принят в обработку."
-                
-                # Отправляем сообщение
-                send_url = f"https://api.telegram.org/bot{token}/sendMessage"
-                data = {
-                    "chat_id": chat_id,
-                    "text": response_text,
-                    "parse_mode": "HTML"
-                }
-                
-                req = urllib.request.Request(
-                    send_url,
-                    data=json.dumps(data).encode('utf-8'),
-                    headers={'Content-Type': 'application/json'}
-                )
-                
-                with urllib.request.urlopen(req) as response:
-                    result = json.loads(response.read().decode())
-                    print(f"Payment confirmation sent: {result}")
-                
-        except Exception as e:
-            print(f"Error processing update: {e}")
-            print(traceback.format_exc())
+    if reply_markup:
+        data["reply_markup"] = reply_markup
     
-    def answer_callback_query(self, token, callback_query_id):
-        """Отвечаем на callback query"""
-        answer_url = f"https://api.telegram.org/bot{token}/answerCallbackQuery"
-        answer_data = {
-            "callback_query_id": callback_query_id
-        }
-        
-        req = urllib.request.Request(
-            answer_url,
-            data=json.dumps(answer_data).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
-        )
-        
+    req = urllib.request.Request(
+        send_url,
+        data=json.dumps(data).encode('utf-8'),
+        headers={'Content-Type': 'application/json'}
+    )
+    
+    try:
         with urllib.request.urlopen(req) as response:
             result = json.loads(response.read().decode())
-            print(f"Callback answered: {result}")
+            print(f"Message sent: {result}")
+    except Exception as e:
+        print(f"Error sending message: {e}")
+
+def answer_callback_query(token, callback_query_id, text=None):
+    """Отвечает на callback query"""
+    answer_url = f"https://api.telegram.org/bot{token}/answerCallbackQuery"
+    answer_data = {
+        "callback_query_id": callback_query_id
+    }
     
-    def show_payment_options(self, token, chat_id):
-        """Показываем выбор платежной системы"""
-        message_text = "Выберите платежную систему для тестовой оплаты:"
-        
-        keyboard = {
-            "inline_keyboard": [
-                [
-                    {"text": "PayMaster Test", "callback_data": "payment_paymaster"}
-                ],
-                [
-                    {"text": "Redsys Test", "callback_data": "payment_redsys"}
-                ]
+    if text:
+        answer_data["text"] = text
+    
+    req = urllib.request.Request(
+        answer_url,
+        data=json.dumps(answer_data).encode('utf-8'),
+        headers={'Content-Type': 'application/json'}
+    )
+    
+    with urllib.request.urlopen(req) as response:
+        result = json.loads(response.read().decode())
+        print(f"Callback answered: {result}")
+
+def show_payment_options(token, chat_id):
+    """Показывает платежные опции"""
+    payment_options_text = "💳 Выберите платежную систему для тестового платежа:"
+    
+    # Создаем инлайн-клавиатуру с платежными опциями
+    keyboard = {
+        "inline_keyboard": [
+            [
+                {"text": "PayMaster", "callback_data": "pay_paymaster_test"}
+            ],
+            [
+                {"text": "Redsys", "callback_data": "pay_redsys_test"}
             ]
-        }
-        
-        send_url = f"https://api.telegram.org/bot{token}/sendMessage"
-        data = {
-            "chat_id": chat_id,
-            "text": message_text,
-            "reply_markup": keyboard
-        }
-        
-        req = urllib.request.Request(
-            send_url,
-            data=json.dumps(data).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
-        )
-        
-        with urllib.request.urlopen(req) as response:
-            result = json.loads(response.read().decode())
-            print(f"Payment options sent: {result}")
-    
-    def show_subscription_options(self, token, chat_id, user_id, user_name):
-        """Показываем опции подписки"""
-        message_text = "💳 Оформление подписки на DrillFlow\n\n"
-        message_text += "С подпиской вы получите:\n"
-        message_text += "✅ Доступ к расширенным функциям\n"
-        message_text += "✅ Неограниченное количество заказов\n"
-        message_text += "✅ Приоритетную поддержку\n\n"
-        message_text += "Стоимость: 499 руб./месяц\n\n"
-        message_text += "Выберите способ оплаты:"
-        
-        keyboard = {
-            "inline_keyboard": [
-                [
-                    {"text": "Подписка через PayMaster", "callback_data": "subscribe_paymaster"}
-                ],
-                [
-                    {"text": "Подписка через Redsys", "callback_data": "subscribe_redsys"}
-                ]
-            ]
-        }
-        
-        send_url = f"https://api.telegram.org/bot{token}/sendMessage"
-        data = {
-            "chat_id": chat_id,
-            "text": message_text,
-            "parse_mode": "HTML",
-            "reply_markup": keyboard
-        }
-        
-        req = urllib.request.Request(
-            send_url,
-            data=json.dumps(data).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
-        )
-        
-        with urllib.request.urlopen(req) as response:
-            result = json.loads(response.read().decode())
-            print(f"Subscription options sent: {result}")
-    
-    def send_invoice(self, token, chat_id, provider="paymaster", is_subscription=False):
-        """Отправляем счет на оплату"""
-        # Сгенерируем уникальный идентификатор для платежа
-        payment_id = str(uuid.uuid4())
-        
-        # Создаем счет
-        invoice_url = f"https://api.telegram.org/bot{token}/sendInvoice"
-        
-        # Выберем платежный провайдер в зависимости от параметра
-        if provider == "redsys":
-            # Redsys Test
-            provider_token = "2051251535:TEST:OTk5MDA4ODgxLTAwNQ"
-            provider_name = "Redsys"
-        else:
-            # PayMaster Test (по умолчанию)
-            provider_token = "1744374395:TEST:115e73e15f41dc0a68e0"
-            provider_name = "PayMaster"
-        
-        # Настройки в зависимости от типа платежа
-        if is_subscription:
-            title = f"Подписка DrillFlow ({provider_name})"
-            description = f"Ежемесячная подписка на расширенные функции DrillFlow через {provider_name}. Автопродление каждые 30 дней."
-            amount = 49900  # 499 рублей в копейках
-            payload = f"subscription_{provider}_{payment_id}"
-        else:
-            title = f"Тестовая оплата DrillFlow ({provider_name})"
-            description = f"Тестовая оплата услуг бурения через {provider_name}. Это демонстрационный платеж для проверки функциональности."
-            amount = 50000  # 500 рублей в копейках
-            payload = f"test_payment_{provider}_{payment_id}"
-            
-        prices = [
-            {
-                "label": "Услуги DrillFlow",
-                "amount": amount
-            }
         ]
+    }
+    
+    # Отправляем сообщение с инлайн-клавиатурой
+    send_message(token, chat_id, payment_options_text, keyboard)
+
+def show_subscription_options(token, chat_id, user_id, user_name):
+    """Показывает опции подписки"""
+    # Проверяем статус текущей подписки
+    has_subscription = check_subscription_status(user_id)
+    
+    if has_subscription:
+        subscription_text = f"🔔 Ваша подписка активна!\n\nФункции премиум-доступа включены."
         
-        invoice_data = {
-            "chat_id": chat_id,
-            "title": title,
-            "description": description,
-            "payload": payload,
-            "provider_token": provider_token,
-            "currency": "RUB",
-            "prices": prices,
-            "max_tip_amount": 10000,  # Максимальные чаевые - 100 рублей
-            "suggested_tip_amounts": [5000, 10000],  # Предложенные чаевые - 50 и 100 рублей
-            "start_parameter": f"payment_{provider}_{payment_id}",
-            "need_name": True,  # Запрашиваем имя пользователя
-            "need_phone_number": True,  # Запрашиваем номер телефона
-            "need_email": True,  # Запрашиваем email
-            "need_shipping_address": False,  # Не запрашиваем адрес доставки
-            "is_flexible": False  # Фиксированная цена
+        # Создаем инлайн-клавиатуру для управления подпиской
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {"text": "📋 Детали подписки", "callback_data": "subscription_details"}
+                ]
+            ]
         }
+    else:
+        subscription_text = f"💼 Подписка на премиум-функции DrillFlow\n\n"
+        subscription_text += "✓ Автоматическое распределение заказов\n"
+        subscription_text += "✓ Расширенная статистика\n"
+        subscription_text += "✓ Приоритетный доступ к новым заказам\n"
+        subscription_text += "✓ Приоритетная техподдержка\n\n"
+        subscription_text += "💰 Стоимость: 499 руб/месяц\n"
         
-        req = urllib.request.Request(
-            invoice_url,
-            data=json.dumps(invoice_data).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
-        )
-        
+        # Создаем инлайн-клавиатуру для выбора платежной системы
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {"text": "💳 Оформить через PayMaster", "callback_data": "pay_paymaster_subscription"}
+                ],
+                [
+                    {"text": "💳 Оформить через Redsys", "callback_data": "pay_redsys_subscription"}
+                ]
+            ]
+        }
+    
+    # Отправляем сообщение с инлайн-клавиатурой
+    send_message(token, chat_id, subscription_text, keyboard)
+
+def send_invoice(token, chat_id, provider="paymaster", is_subscription=False):
+    """Отправляет инвойс для оплаты"""
+    invoice_url = f"https://api.telegram.org/bot{token}/sendInvoice"
+    
+    # Формируем данные для инвойса в зависимости от типа платежа
+    if is_subscription:
+        title = "Подписка на DrillFlow Premium"
+        description = "Ежемесячная подписка на премиум-функции DrillFlow"
+        amount = 49900  # 499 руб. в копейках
+        payload = json.dumps({"is_subscription": True})
+    else:
+        title = "Тестовый платеж"
+        description = "Тестовый платеж для проверки системы"
+        amount = 100  # 1 руб. в копейках
+        payload = json.dumps({"is_subscription": False})
+    
+    # Настройки инвойса
+    invoice_data = {
+        "chat_id": chat_id,
+        "title": title,
+        "description": description,
+        "payload": payload,
+        "provider_token": os.getenv(f"{provider.upper()}_PAYMENT_TOKEN", "TEST_PAYMENT_TOKEN"),
+        "currency": "RUB",
+        "prices": [{"label": title, "amount": amount}],
+        "need_name": True,
+        "need_phone_number": True,
+        "need_email": True,
+        "need_shipping_address": False,
+        "is_flexible": False
+    }
+    
+    req = urllib.request.Request(
+        invoice_url,
+        data=json.dumps(invoice_data).encode('utf-8'),
+        headers={'Content-Type': 'application/json'}
+    )
+    
+    try:
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode())
+            print(f"Invoice sent: {result}")
+    except Exception as e:
+        print(f"Error sending invoice: {e}")
+        # В случае ошибки отправляем сообщение пользователю
+        error_message = "Извините, произошла ошибка при создании платежа. Пожалуйста, попробуйте позже или обратитесь в поддержку."
+        send_message(token, chat_id, error_message)
+
+# Функции-обработчики для Vercel
+
+def get(req, res):
+    """Обработчик GET-запросов для Vercel"""
+    # Получаем информацию о вебхуке
+    token = os.getenv("BOT_TOKEN", "")
+    webhook_url = f"https://{os.getenv('BOT_WEBHOOK_DOMAIN', 'drilling-flow.vercel.app')}/api/webhook_simple"
+    
+    response_data = {
+        "app": "DrillFlow Bot",
+        "version": "1.0.0",
+        "status": "running",
+        "webhook_url": webhook_url,
+        "telegram_bot": "@Drill_Flow_bot",
+        "updated_at": int(time.time())
+    }
+    
+    # Пытаемся получить информацию о вебхуке от Telegram
+    try:
+        url = f"https://api.telegram.org/bot{token}/getWebhookInfo"
+        with urllib.request.urlopen(url) as response:
+            webhook_info = json.loads(response.read().decode())
+            response_data["current_webhook"] = webhook_info.get("result", {}).get("url", "")
+            response_data["pending_updates"] = webhook_info.get("result", {}).get("pending_update_count", 0)
+    except Exception as e:
+        response_data["error"] = str(e)
+    
+    # Отправляем ответ
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps(response_data)
+    }
+
+def post(req, res):
+    """Обработчик POST-запросов для Vercel"""
+    # Получаем данные запроса
+    data = req.get("body", "{}")
+    if isinstance(data, str):
         try:
-            with urllib.request.urlopen(req) as response:
-                result = json.loads(response.read().decode())
-                print(f"Invoice sent via {provider_name}: {result}")
-        except Exception as e:
-            print(f"Error sending invoice via {provider_name}: {e}")
-            print(traceback.format_exc())
+            update = json.loads(data)
+        except:
+            update = {}
+    else:
+        update = data
+    
+    # Обрабатываем полученные данные
+    try:
+        print(f"Received update: {update}")
+        
+        # Получаем токен
+        token = os.getenv("BOT_TOKEN", "")
+        
+        # Проверяем, есть ли сообщение в обновлении
+        if "message" in update and "text" in update["message"]:
+            chat_id = update["message"]["chat"]["id"]
+            text = update["message"]["text"]
+            user = update["message"].get("from", {})
+            user_id = str(user.get("id", ""))
+            user_name = user.get("first_name", "User")
             
-            # Отправляем сообщение об ошибке
-            error_message = f"Ошибка при создании счета через {provider_name}: {str(e)}"
-            send_url = f"https://api.telegram.org/bot{token}/sendMessage"
-            data = {
-                "chat_id": chat_id,
-                "text": error_message
+            # Проверяем, находится ли пользователь в процессе регистрации
+            if user_id in user_states:
+                current_state = user_states.get(user_id)
+                if current_state != RegistrationState.IDLE:
+                    # Обрабатываем шаг регистрации
+                    run_async(process_registration_step, str(chat_id), user_id, text, token)
+                    return {"statusCode": 200, "body": "OK"}
+            
+            # Обрабатываем команды
+            if text.startswith('/start'):
+                # Создаем ответное сообщение
+                response_text = f"Привет, {user_name}!\n\nДобро пожаловать в DrillFlow - платформу для управления буровыми работами.\n\n🔹 Заказчики могут размещать заказы\n🔹 Подрядчики могут принимать заказы\n🔹 Автоматическое распределение заказов"
+                
+                # Создаем физическую клавиатуру (reply keyboard)
+                reply_keyboard = {
+                    "keyboard": [
+                        [
+                            {"text": "📋 Профиль"},
+                            {"text": "📦 Заказы"}
+                        ],
+                        [
+                            {"text": "❓ Помощь"},
+                            {"text": "📊 Статистика"}
+                        ],
+                        [
+                            {"text": "💳 Тестовый платеж"},
+                            {"text": "🔄 Подписка"}
+                        ]
+                    ],
+                    "resize_keyboard": True,
+                    "persistent": True
+                }
+                
+                # Отправляем сообщение с физической клавиатурой
+                send_url = f"https://api.telegram.org/bot{token}/sendMessage"
+                data = {
+                    "chat_id": chat_id,
+                    "text": response_text,
+                    "parse_mode": "HTML",
+                    "reply_markup": reply_keyboard
+                }
+                
+                req = urllib.request.Request(
+                    send_url,
+                    data=json.dumps(data).encode('utf-8'),
+                    headers={'Content-Type': 'application/json'}
+                )
+                
+                with urllib.request.urlopen(req) as response:
+                    result = json.loads(response.read().decode())
+                    print(f"Message with keyboard sent: {result}")
+            
+            elif text.startswith('/profile') or text == "📋 Профиль" or text == "Профиль":
+                # Проверяем, зарегистрирован ли пользователь как подрядчик
+                run_async(show_contractor_profile, str(chat_id), user_id, token)
+            
+            elif text.startswith('/register_contractor'):
+                # Начинаем процесс регистрации подрядчика
+                run_async(start_registration, str(chat_id), user_name, user_id, token)
+            
+            elif text.startswith('/my_orders') or text == "📦 Заказы" or text == "Заказы":
+                # Показываем список заказов подрядчика
+                run_async(show_contractor_orders, str(chat_id), user_id, token)
+            
+            elif text.startswith('/payment') or text == "💳 Тестовый платеж" or text == "Тестовый платеж":
+                # Показываем платежные опции
+                show_payment_options(token, chat_id)
+            
+            elif text.startswith('/subscription') or text == "🔄 Подписка" or text == "Подписка":
+                # Показываем опции подписки
+                show_subscription_options(token, chat_id, user_id, user_name)
+            
+            elif text.startswith('/help') or text == "❓ Помощь" or text == "Помощь":
+                # Отправляем список команд
+                response_text = "Список доступных команд:\n/start - Начать работу с ботом\n/help - Получить помощь\n/profile - Мой профиль\n/orders - Мои заказы\n/payment - Сделать тестовый платеж\n/subscription - Управление подпиской"
+                
+                # Отправляем сообщение
+                send_message(token, chat_id, response_text)
+            
+            elif text.startswith('/stats') or text == "📊 Статистика" or text == "Статистика":
+                # Отправляем статистику
+                response_text = "Ваша статистика:\nАктивных заказов: 0\nСтатус: Подрядчик"
+                
+                # Отправляем сообщение
+                send_message(token, chat_id, response_text)
+            
+            else:
+                # Эхо-ответ на остальные сообщения
+                response_text = f"Вы написали: {text}\n\nИспользуйте /help для получения списка команд."
+                
+                # Отправляем сообщение
+                send_message(token, chat_id, response_text)
+        
+        # Обрабатываем callback-запросы (нажатия на inline-кнопки)
+        elif "callback_query" in update:
+            callback_query = update["callback_query"]
+            callback_id = callback_query["id"]
+            data = callback_query["data"]
+            chat_id = callback_query["message"]["chat"]["id"]
+            user = callback_query.get("from", {})
+            user_id = str(user.get("id", ""))
+            
+            # Обрабатываем callback запросы для регистрации подрядчиков
+            if data.startswith('spec_') or data in ['confirm_registration', 'cancel_registration']:
+                run_async(handle_registration_callback, callback_id, str(chat_id), user_id, data, token)
+            
+            # Обрабатываем callback запросы для заказов
+            elif data.startswith('accept_order_') or data.startswith('decline_order_'):
+                run_async(handle_order_response, callback_id, str(chat_id), user_id, data, token)
+            
+            elif data.startswith('start_order_'):
+                # Извлекаем ID заказа
+                order_id = data.split('_')[-1]
+                run_async(update_order_status, str(chat_id), user_id, order_id, OrderStatus.IN_PROGRESS, token)
+            
+            elif data.startswith('complete_order_'):
+                # Извлекаем ID заказа
+                order_id = data.split('_')[-1]
+                run_async(update_order_status, str(chat_id), user_id, order_id, OrderStatus.COMPLETED, token)
+            
+            elif data == 'my_orders':
+                run_async(show_contractor_orders, str(chat_id), user_id, token)
+            
+            elif data.startswith('order_details_'):
+                # Извлекаем ID заказа
+                order_id = data.split('_')[-1]
+                run_async(show_order_details, str(chat_id), user_id, order_id, token)
+            
+            elif data == "payment":
+                # Показываем платежные опции
+                show_payment_options(token, chat_id)
+                # Отвечаем на callback
+                answer_callback_query(token, callback_id)
+            
+            elif data == "subscription":
+                # Показываем опции подписки
+                user_name = callback_query["from"].get("first_name", "User")
+                show_subscription_options(token, chat_id, user_id, user_name)
+                # Отвечаем на callback
+                answer_callback_query(token, callback_id)
+            
+            elif data.startswith("pay_"):
+                parts = data.split("_")
+                if len(parts) >= 3:
+                    provider = parts[1]
+                    payment_type = parts[2]
+                    is_subscription = payment_type == "subscription"
+                    
+                    # Отправляем инвойс для оплаты
+                    send_invoice(token, chat_id, provider, is_subscription)
+                    
+                    # Отвечаем на callback
+                    answer_callback_query(token, callback_id)
+            
+            else:
+                # Эхо-ответ на остальные callback-запросы
+                response_text = f"Выбрано: {data}"
+                
+                # Отправляем сообщение
+                send_message(token, chat_id, response_text)
+                
+                # Отвечаем на callback
+                answer_callback_query(token, callback_id)
+        
+        # Обрабатываем успешные платежи
+        elif "pre_checkout_query" in update:
+            pre_checkout_id = update["pre_checkout_query"]["id"]
+            
+            # Подтверждаем предварительную проверку платежа
+            pre_checkout_url = f"https://api.telegram.org/bot{token}/answerPreCheckoutQuery"
+            pre_checkout_data = {
+                "pre_checkout_query_id": pre_checkout_id,
+                "ok": True
             }
             
             req = urllib.request.Request(
-                send_url,
-                data=json.dumps(data).encode('utf-8'),
+                pre_checkout_url,
+                data=json.dumps(pre_checkout_data).encode('utf-8'),
                 headers={'Content-Type': 'application/json'}
             )
             
             with urllib.request.urlopen(req) as response:
                 result = json.loads(response.read().decode())
-                print(f"Error message sent: {result}") 
+                print(f"Pre-checkout answered: {result}")
+        
+        # Обрабатываем информацию о платеже
+        elif "message" in update and "successful_payment" in update["message"]:
+            chat_id = update["message"]["chat"]["id"]
+            payment_info = update["message"]["successful_payment"]
+            payment_amount = payment_info["total_amount"] / 100  # Сумма в копейках, переводим в рубли
+            payment_currency = payment_info["currency"]
+            is_subscription = "is_subscription" in payment_info["invoice_payload"] and payment_info["invoice_payload"]["is_subscription"]
+            
+            # Сохраняем информацию о подписке, если это подписка
+            if is_subscription:
+                user_id = str(update["message"]["from"]["id"])
+                subscription_cache[user_id] = {
+                    "active": True,
+                    "expires_at": int(time.time()) + 30 * 24 * 60 * 60,  # +30 дней
+                    "payment_id": payment_info["telegram_payment_charge_id"]
+                }
+                response_text = f"✅ Подписка успешно оформлена!\n\n"
+                response_text += f"Сумма: {payment_amount} {payment_currency}\n"
+                response_text += f"Идентификатор платежа: {payment_info['telegram_payment_charge_id']}\n\n"
+                response_text += f"Ваша подписка активирована. Теперь вам доступны расширенные функции DrillFlow."
+            else:
+                response_text = f"✅ Тестовый платеж выполнен!\n\n"
+                response_text += f"Сумма: {payment_amount} {payment_currency}\n"
+                response_text += f"Идентификатор платежа: {payment_info['telegram_payment_charge_id']}\n\n"
+                response_text += f"Спасибо за оплату! Это учебный пример с Telegram."
+            
+            # Отправляем сообщение
+            send_message(token, chat_id, response_text)
+        
+        # Обрабатываем загрузку фото
+        elif "message" in update and "photo" in update["message"]:
+            chat_id = update["message"]["chat"]["id"]
+            user = update["message"].get("from", {})
+            user_id = str(user.get("id", ""))
+            photos = update["message"]["photo"]
+            
+            if photos:
+                # Берем фото с наилучшим качеством (последнее в списке)
+                photo = photos[-1]
+                file_id = photo["file_id"]
+                
+                # Передаем на обработку
+                run_async(handle_document_upload, str(chat_id), user_id, file_id, token)
+        
+        # Обрабатываем отправку документов
+        elif "message" in update and "document" in update["message"]:
+            chat_id = update["message"]["chat"]["id"]
+            user = update["message"].get("from", {})
+            user_id = str(user.get("id", ""))
+            document = update["message"]["document"]
+            file_id = document["file_id"]
+            
+            # Передаем на обработку
+            run_async(handle_document_upload, str(chat_id), user_id, file_id, token)
+        
+        # Обрабатываем отправку местоположения
+        elif "message" in update and "location" in update["message"]:
+            chat_id = update["message"]["chat"]["id"]
+            user = update["message"].get("from", {})
+            user_id = str(user.get("id", ""))
+            location = update["message"]["location"]
+            latitude = location["latitude"]
+            longitude = location["longitude"]
+            
+            # Передаем на обработку
+            run_async(handle_location, str(chat_id), user_id, latitude, longitude, token)
+    
+    except Exception as e:
+        print(f"Error processing update: {e}")
+        traceback.print_exc()
+    
+    # Отправляем успешный ответ
+    return {"statusCode": 200, "body": "OK"}
+
+# Экспортируем функции-обработчики для Vercel
+def lambda_handler(event, context):
+    """Функция-обертка для AWS Lambda"""
+    if event.get('httpMethod') == 'GET':
+        return get(event, context)
+    elif event.get('httpMethod') == 'POST':
+        return post(event, context)
+    else:
+        return {
+            "statusCode": 405,
+            "body": "Method Not Allowed"
+        }
+
+# Функция для Vercel
+def handler(req, res):
+    """Функция для Vercel serverless"""
+    method = req.get('method', 'GET')
+    if method == 'GET':
+        result = get(req, None)
+        return result
+    elif method == 'POST':
+        result = post(req, None)
+        return result
+    else:
+        return {
+            "statusCode": 405,
+            "body": "Method Not Allowed"
+        }
