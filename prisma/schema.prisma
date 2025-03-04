@@ -45,12 +45,15 @@ model User {
   updatedAt     DateTime      @updatedAt
   
   // Relationships
+  location        Location?
   clientOrders    Order[]       @relation("ClientOrders")
   contractorOrders Order[]      @relation("ContractorOrders")
   documents       Document[]
   payments        Payment[]
   subscription    Subscription?
   settings        Settings?
+  ratedBy         Rating[]      @relation("RatedBy")
+  receivedRatings Rating[]      @relation("RatedUser")
 }
 
 model Location {
@@ -92,6 +95,7 @@ model Order {
   client        User     @relation("ClientOrders", fields: [clientId], references: [id])
   contractorId  Int?
   contractor    User?    @relation("ContractorOrders", fields: [contractorId], references: [id])
+  rating        Rating?
 }
 
 model Rating {
@@ -112,6 +116,7 @@ model Payment {
   amount        Float
   status        String
   paymentMethod String
+  description   String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
@@ -135,16 +140,18 @@ model Subscription {
 }
 
 model Settings {
-  id              Int      @id @default(autoincrement())
-  notifications   Boolean  @default(true)
-  language        String   @default("ru")
-  radius          Int      @default(50)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                  Int      @id @default(autoincrement())
+  notificationsEnabled Boolean  @default(true)
+  soundEnabled        Boolean  @default(true)
+  language           String   @default("ru")
+  orderRadius        Int      @default(50)
+  theme              String   @default("LIGHT")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
   
   // Relationships
-  userId          Int      @unique
-  user            User     @relation(fields: [userId], references: [id])
+  userId             Int      @unique
+  user               User     @relation(fields: [userId], references: [id])
 }
 
 enum Role {
